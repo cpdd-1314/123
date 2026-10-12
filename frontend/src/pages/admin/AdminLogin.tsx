@@ -46,7 +46,7 @@ export default function AdminLogin() {
             <ShieldCheck className="size-6 text-primary" />
           </span>
           <h1 className="mt-4 text-xl font-bold text-foreground">后台管理登录</h1>
-          <p className="mt-1 text-xs text-muted-foreground">巅峰陪玩榜 · 数据维护中心</p>
+          <p className="mt-1 text-xs text-muted-foreground">𝓮𝓵𝓮𝓿𝓮𝓷十一愿club · 数据维护中心</p>
         </div>
 
         <div className="mt-6 space-y-4">

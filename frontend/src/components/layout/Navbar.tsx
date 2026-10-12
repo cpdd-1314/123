@@ -17,9 +17,9 @@ export default function Navbar({ realtimeConnected = false }: { realtimeConnecte
           </span>
           <span className="flex flex-col leading-none">
             <span className="text-lg font-bold tracking-wide text-foreground">
-              巅峰<span className="text-primary">陪玩榜</span>
+              𝓮𝓵𝓮𝓿𝓮𝓷<span className="text-primary">十一愿</span>club
             </span>
-            <span className="mt-0.5 text-[10px] tracking-[0.3em] text-muted-foreground">PEIWAN RANK</span>
+            <span className="mt-0.5 text-[10px] tracking-[0.3em] text-muted-foreground">ELEVEN CLUB</span>
           </span>
         </Link>
 

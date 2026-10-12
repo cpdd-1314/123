@@ -37,7 +37,7 @@ export default function PlayerDetail() {
   }
 
   return (
-    <div className="container relative mx-auto max-w-3xl px-4 py-10">
+    <div className="container relative mx-auto flex min-h-[calc(100dvh-4rem)] max-w-3xl flex-col px-4 py-10">
       <Link
         to="/"
         className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-primary"
@@ -115,7 +115,10 @@ export default function PlayerDetail() {
           <span className="text-xs text-muted-foreground">数据由后台维护</span>
         </div>
 
-        {/* 星级评价（最底部） */}
+      </FadeIn>
+
+      {/* 星级评价（页面最底部） */}
+      <div className="mt-auto pt-6">
         <RatingSection
           targetName="这位陪玩"
           summary={ratingData?.summary}
@@ -125,7 +128,7 @@ export default function PlayerDetail() {
           isSubmitting={submitRating.isPending}
           error={submitRating.isError ? getErrorMessage(submitRating.error) : undefined}
         />
-      </FadeIn>
+      </div>
     </div>
   )
 }
