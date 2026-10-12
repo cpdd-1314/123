@@ -1,0 +1,22 @@
+[
+  {
+    "pageKey": "xvbtif",
+    "title": "/",
+    "url": "/"
+  },
+  {
+    "pageKey": "fv3ve2",
+    "title": "/admin",
+    "url": "/admin"
+  },
+  {
+    "pageKey": "zrv43s",
+    "title": "/admin/login",
+    "url": "/admin/login"
+  },
+  {
+    "pageKey": "r1d03z",
+    "title": "/player/:id",
+    "url": "/player/:id"
+  }
+]

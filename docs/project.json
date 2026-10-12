@@ -1,0 +1,8 @@
+{
+  "project_type": "web",
+  "sub_project_type": "",
+  "name": "Peiwan Rank",
+  "app_slug": "peiwan-rank",
+  "version_description": "Build companion leaderboard with admin backend",
+  "preview_type": "pc"
+}
