@@ -15,8 +15,10 @@ export default function Index() {
   const { data: stats } = useStats()
 
   const isFiltered = !!query.game || !!query.keyword
-  const topThree = useMemo(() => (players ?? []).slice(0, 3), [players])
-  const rest = useMemo(() => (players ?? []).slice(3), [players])
+  // 领奖台最多 3 人；榜单不足 3 人时全部进领奖台，剩余进列表
+  const podiumCount = Math.min(3, players?.length ?? 0)
+  const topThree = useMemo(() => (players ?? []).slice(0, podiumCount), [players, podiumCount])
+  const rest = useMemo(() => (players ?? []).slice(podiumCount), [players, podiumCount])
 
   return (
     <div className="relative min-h-screen">
@@ -52,11 +54,11 @@ export default function Index() {
         {/* 俱乐部名片 + 评分 */}
         <ClubCard />
 
-        {/* TOP3 领奖台（无筛选时展示） */}
-        {!isFiltered && topThree.length === 3 && (
+        {/* TOP3 领奖台（无筛选时展示；榜单不足 3 人时展示现有全部） */}
+        {!isFiltered && topThree.length > 0 && (
           <section className="mt-12">
             <h2 className="mb-6 text-center text-sm font-semibold tracking-[0.4em] text-muted-foreground">
-              TOP 3 荣耀殿堂
+              {topThree.length >= 3 ? 'TOP 3 荣耀殿堂' : '荣耀榜单'}
             </h2>
             <Podium topThree={topThree} />
           </section>
@@ -67,7 +69,7 @@ export default function Index() {
           <FilterBar query={query} onChange={setQuery} />
         </div>
 
-        {/* 榜单列表 */}
+        {/* 榜单列表（全员都在领奖台时不再重复展示） */}
         <section className="mt-6">
           {isLoading ? (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -75,15 +77,18 @@ export default function Index() {
                 <div key={i} className="h-52 animate-pulse rounded-xl border border-border bg-card/60" />
               ))}
             </div>
-          ) : players && players.length > 0 ? (
+          ) : players && (isFiltered ? players.length > 0 : rest.length > 0) ? (
             <Stagger stagger={0.05} className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {(isFiltered ? players : rest).map((player, i) => (
                 <PlayerCard key={player.id} player={player} rank={isFiltered ? i + 1 : i + 4} />
               ))}
             </Stagger>
+          ) : players && players.length > 0 ? (
+            // 榜单有数据但全部在领奖台展示，无需列表
+            null
           ) : (
             <div className="rounded-xl border border-dashed border-border py-16 text-center">
-              <p className="text-sm text-muted-foreground">没有找到匹配的陪玩，换个条件试试吧</p>
+              <p className="text-sm text-muted-foreground">暂无陪玩上榜，请先在后台添加</p>
             </div>
           )}
         </section>
