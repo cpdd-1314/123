@@ -57,6 +57,24 @@ export default function Index() {
   const boardLoading = isHistory ? historyLoading : isLoading
 
   const isFiltered = !isHistory && (!!query.game || !!query.keyword)
+
+  /** 由周期起点 + 类型推算可读的日期区间（周：周一~周日；月：1 号~月末） */
+  const periodRange = useMemo(() => {
+    const start = history?.periodStart
+    if (!start) return ''
+    const d = new Date(start + 'T00:00:00Z')
+    let end: Date
+    if (mode === 'weekly') {
+      end = new Date(d)
+      end.setUTCDate(end.getUTCDate() + 6)
+    } else {
+      end = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 0))
+    }
+    const fmt = (x: Date) =>
+      `${x.getUTCFullYear()}-${String(x.getUTCMonth() + 1).padStart(2, '0')}-${String(x.getUTCDate()).padStart(2, '0')}`
+    return `${fmt(d)} ~ ${fmt(end)}`
+  }, [history?.periodStart, mode])
+
   // 领奖台仅在前端未筛选且人数 > 3 时展示；列表始终展示完整名册，避免人数少时空白
   const showPodium = !isFiltered && boardPlayers.length > 3
   const podiumPlayers = useMemo<Player[]>(
@@ -128,6 +146,17 @@ export default function Index() {
           </div>
         </div>
 
+        {/* 历史榜统计周期日期区间（始终展示） */}
+        {isHistory && periodRange && (
+          <div className="mt-6 flex justify-center">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card/60 px-4 py-1.5 text-xs text-muted-foreground backdrop-blur-sm">
+              <CalendarDays className="size-3.5" />
+              {mode === 'weekly' ? '上周最佳' : '上月最佳'}统计周期：
+              <span className="font-medium text-foreground">{periodRange}</span>
+            </span>
+          </div>
+        )}
+
         {/* TOP3 领奖台（未筛选且人数 > 3 时展示） */}
         {showPodium && podiumPlayers.length > 0 && (
           <section className="mt-12">
@@ -139,11 +168,6 @@ export default function Index() {
                 : 'TOP 3 荣耀殿堂'}
             </h2>
             <Podium topThree={podiumPlayers} />
-            {isHistory && history?.periodStart && (
-              <p className="mt-4 text-center text-xs text-muted-foreground">
-                统计周期：{history.periodStart} 起的{mode === 'weekly' ? '一周' : '一个月'} · 快照于周期结束时生成
-              </p>
-            )}
           </section>
         )}
 

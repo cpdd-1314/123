@@ -1,31 +1,31 @@
 [
   {
-    "pageKey": "c5q1zo",
+    "pageKey": "rn1xy1",
     "title": "/",
     "url": "/"
   },
   {
-    "pageKey": "9jw1wo",
+    "pageKey": "wepzyg",
     "title": "/admin",
     "url": "/admin"
   },
   {
-    "pageKey": "2yf3kt",
+    "pageKey": "5z1mm1",
     "title": "/admin/login",
     "url": "/admin/login"
   },
   {
-    "pageKey": "3br199",
+    "pageKey": "uqtiy8",
     "title": "/player-center",
     "url": "/player-center"
   },
   {
-    "pageKey": "kwqdvv",
+    "pageKey": "z2br1h",
     "title": "/player/:id",
     "url": "/player/:id"
   },
   {
-    "pageKey": "jnh3es",
+    "pageKey": "gfvps5",
     "title": "/player/login",
     "url": "/player/login"
   }

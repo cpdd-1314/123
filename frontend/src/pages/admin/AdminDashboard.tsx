@@ -14,6 +14,14 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import {
   Table,
   TableBody,
   TableCell,
@@ -31,6 +39,7 @@ import {
   KeyRound,
   LogOut,
   MessageSquare,
+  MoreVertical,
   Pencil,
   Pin,
   PinOff,
@@ -179,28 +188,47 @@ export default function AdminDashboard() {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Button variant="outline" onClick={() => setClubOpen(true)}>
-            <Building2 className="size-4" />
-            俱乐部设置
-          </Button>
-          <Button variant="outline" onClick={() => setGamesOpen(true)}>
-            <Gamepad2 className="size-4" />
-            游戏管理
-          </Button>
-          <Button
-            onClick={() => {
-              setEditing(null)
-              setFormOpen(true)
-            }}
-            className="bg-primary text-primary-foreground shadow-[0_0_14px_oklch(0.55_0.28_290/0.4)]"
-          >
-            <Plus className="size-4" />
-            新增陪玩
-          </Button>
-          <Button variant="outline" onClick={handleLogout} disabled={logoutMutation.isPending}>
-            <LogOut className="size-4" />
-            退出
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                className="size-9"
+                aria-label="更多功能"
+              >
+                <MoreVertical className="size-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-52">
+              <DropdownMenuLabel>管理功能</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => { setEditing(null); setFormOpen(true) }}>
+                <Plus className="size-4" />
+                新增陪玩
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setGamesOpen(true)}>
+                <Gamepad2 className="size-4" />
+                游戏管理
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setClubOpen(true)}>
+                <Building2 className="size-4" />
+                俱乐部设置
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => exportPlayersCsv(filteredList)}>
+                <Download className="size-4" />
+                导出名单
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={handleLogout}
+                disabled={logoutMutation.isPending}
+                className="text-destructive focus:text-destructive"
+              >
+                <LogOut className="size-4" />
+                退出登录
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </FadeIn>
 
@@ -225,10 +253,6 @@ export default function AdminDashboard() {
               热度积分决定排名；置顶的陪玩将优先展示在榜单最前面。可为每位陪玩生成专属账号。
             </p>
           </div>
-          <Button variant="outline" size="sm" onClick={() => exportPlayersCsv(filteredList)}>
-            <Download className="size-4" />
-            导出名单
-          </Button>
         </div>
 
         {/* 搜索 / 状态筛选 */}
