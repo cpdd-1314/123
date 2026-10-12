@@ -3,6 +3,6 @@
   "sub_project_type": "",
   "name": "Peiwan Rank",
   "app_slug": "peiwan-rank",
-  "version_description": "Rename site to Eleven club move rating to bottom",
+  "version_description": "Fix origin check and ranking sort add order system",
   "preview_type": "pc"
 }
