@@ -1,11 +1,12 @@
 import { Link, useLocation } from 'react-router-dom'
-import { Gamepad2, LayoutDashboard, Trophy } from 'lucide-react'
+import { Gamepad2, LayoutDashboard, Trophy, UserCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 /** 顶部导航栏（放在 AnimatedRoutes 外部） */
 export default function Navbar({ realtimeConnected = false }: { realtimeConnected?: boolean }) {
   const { pathname } = useLocation()
   const isAdmin = pathname.startsWith('/admin')
+  const isPlayer = pathname.startsWith('/player/') || pathname.startsWith('/player-center')
 
   return (
     <header className="sticky top-0 z-50 border-b border-border/60 bg-background/80 backdrop-blur-xl">
@@ -41,13 +42,25 @@ export default function Navbar({ realtimeConnected = false }: { realtimeConnecte
             to="/"
             className={cn(
               'flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-200',
-              !isAdmin
+              !isAdmin && !isPlayer
                 ? 'bg-primary/15 text-primary'
                 : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
             )}
           >
             <Gamepad2 className="size-4" />
             排行榜
+          </Link>
+          <Link
+            to="/player-center"
+            className={cn(
+              'flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-200',
+              isPlayer
+                ? 'bg-info/15 text-info'
+                : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
+            )}
+          >
+            <UserCircle className="size-4" />
+            陪玩中心
           </Link>
           <Link
             to="/admin"

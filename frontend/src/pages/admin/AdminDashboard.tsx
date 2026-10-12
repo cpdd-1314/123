@@ -22,14 +22,31 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { toast } from 'sonner'
-import { Flame, LogOut, Pencil, Pin, PinOff, Plus, ShoppingBag, Star, Trash2, Users, Power } from 'lucide-react'
+import {
+  Building2,
+  Flame,
+  KeyRound,
+  LogOut,
+  MessageSquare,
+  Pencil,
+  Pin,
+  PinOff,
+  Plus,
+  Star,
+  Trash2,
+  UserCheck,
+  Users,
+  Power,
+} from 'lucide-react'
 import { FadeIn, Stagger } from '@/components/MotionPrimitives'
 import CountUp from '@/components/reactbits/CountUp'
 import PlayerFormDialog from '@/components/admin/PlayerFormDialog'
+import AccountDialog from '@/components/admin/AccountDialog'
+import ClubSettingsDialog from '@/components/admin/ClubSettingsDialog'
 import { useAdminAuth, useLogout } from '@/hooks/use-admin-auth'
-import { useAdminPlayers, usePlayerMutations } from '@/hooks/use-players'
+import { useAccountMutations, useAdminPlayers, usePlayerMutations } from '@/hooks/use-players'
 import { getErrorMessage } from '@/lib/api-client'
-import type { Player, PlayerInput } from '@/types/players'
+import type { AdminPlayer, GeneratedAccount, PlayerInput } from '@/types/players'
 
 export default function AdminDashboard() {
   const navigate = useNavigate()
@@ -37,10 +54,14 @@ export default function AdminDashboard() {
   const logoutMutation = useLogout()
   const { data: players, isLoading } = useAdminPlayers(!!me)
   const mutations = usePlayerMutations()
+  const accountMutations = useAccountMutations()
 
   const [formOpen, setFormOpen] = useState(false)
-  const [editing, setEditing] = useState<Player | null>(null)
-  const [deleting, setDeleting] = useState<Player | null>(null)
+  const [editing, setEditing] = useState<AdminPlayer | null>(null)
+  const [deleting, setDeleting] = useState<AdminPlayer | null>(null)
+  const [accountPlayer, setAccountPlayer] = useState<AdminPlayer | null>(null)
+  const [generated, setGenerated] = useState<GeneratedAccount | null>(null)
+  const [clubOpen, setClubOpen] = useState(false)
 
   // 未登录 → 重定向登录页
   if (!authLoading && (authError || !me)) {
@@ -80,12 +101,36 @@ export default function AdminDashboard() {
     }
   }
 
-  const totalOrders = (players ?? []).reduce((sum, p) => sum + p.orders, 0)
-  const avgRating =
-    players && players.length > 0
-      ? players.reduce((sum, p) => sum + p.rating, 0) / players.length
-      : 0
-  const onlineCount = (players ?? []).filter((p) => p.isOnline && p.status === 'active').length
+  const handleGenerateAccount = async (username?: string) => {
+    if (!accountPlayer) return
+    try {
+      const result = await accountMutations.generateAccount.mutateAsync({
+        id: accountPlayer.id,
+        username,
+      })
+      setGenerated(result)
+      toast.success(`账号已生成：${result.username}`)
+    } catch (err) {
+      toast.error(getErrorMessage(err))
+    }
+  }
+
+  const handleRevokeAccount = async () => {
+    if (!accountPlayer) return
+    try {
+      await accountMutations.revokeAccount.mutateAsync(accountPlayer.id)
+      toast.success('账号已注销')
+      setAccountPlayer(null)
+    } catch (err) {
+      toast.error(getErrorMessage(err))
+    }
+  }
+
+  const list = players ?? []
+  const totalOrders = list.reduce((sum, p) => sum + p.orders, 0)
+  const totalReviews = list.reduce((sum, p) => sum + p.reviewCount, 0)
+  const activeCount = list.filter((p) => p.status === 'active').length
+  const accountCount = list.filter((p) => p.hasAccount).length
 
   const submitting =
     mutations.createPlayer.isPending ||
@@ -102,7 +147,11 @@ export default function AdminDashboard() {
             欢迎回来，{me?.username} —— 在这里维护榜单信息
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <Button variant="outline" onClick={() => setClubOpen(true)}>
+            <Building2 className="size-4" />
+            俱乐部设置
+          </Button>
           <Button
             onClick={() => {
               setEditing(null)
@@ -122,10 +171,14 @@ export default function AdminDashboard() {
 
       {/* 统计卡片 */}
       <Stagger stagger={0.08} className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <StatCard icon={Users} label="陪玩总数" value={players?.length ?? 0} />
-        <StatCard icon={Power} label="在线" value={onlineCount} />
-        <StatCard icon={ShoppingBag} label="总人气" value={totalOrders} />
-        <StatCard icon={Star} label="平均评分" value={avgRating} decimals={1} />
+        <StatCard icon={Users} label="陪玩总数" value={list.length} />
+        <StatCard icon={UserCheck} label="已上架" value={activeCount} />
+        <StatCard icon={KeyRound} label="已建账号" value={accountCount} />
+        <StatCard icon={MessageSquare} label="累计评价" value={totalReviews} />
+      </Stagger>
+
+      <Stagger stagger={0.08} className="mt-3 grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <StatCard icon={Flame} label="总人气" value={totalOrders} />
       </Stagger>
 
       {/* 管理表格 */}
@@ -133,7 +186,7 @@ export default function AdminDashboard() {
         <div className="border-b border-border/60 px-4 py-3">
           <h2 className="text-sm font-semibold text-foreground">陪玩管理</h2>
           <p className="mt-0.5 text-[11px] text-muted-foreground">
-            热度积分决定排名；置顶的陪玩将优先展示在榜单最前面
+            热度积分决定排名；置顶的陪玩将优先展示在榜单最前面。可为每位陪玩生成专属账号。
           </p>
         </div>
 
@@ -152,15 +205,16 @@ export default function AdminDashboard() {
                   <TableHead>陪玩</TableHead>
                   <TableHead>游戏</TableHead>
                   <TableHead className="text-right">单价</TableHead>
-                  <TableHead className="text-right">评分</TableHead>
+                  <TableHead className="text-right">星级</TableHead>
                   <TableHead className="text-right">人气</TableHead>
                   <TableHead className="text-right">热度</TableHead>
+                  <TableHead className="text-center">账号</TableHead>
                   <TableHead className="text-center">状态</TableHead>
                   <TableHead className="text-right">操作</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {(players ?? []).map((p, i) => (
+                {list.map((p, i) => (
                   <TableRow key={p.id} className={p.status === 'offline' ? 'opacity-50' : ''}>
                     <TableCell>
                       <span className="flex size-7 items-center justify-center rounded-md bg-secondary/70 text-xs font-semibold text-muted-foreground">
@@ -176,20 +230,48 @@ export default function AdminDashboard() {
                             {p.isPinned && <Pin className="size-3 fill-primary text-primary" />}
                           </p>
                           <p className="text-[11px] text-muted-foreground">
-                            {p.isOnline ? '在线' : '离线'} · {p.tags.slice(0, 2).join(' / ') || '无标签'}
+                            {p.tags.slice(0, 2).join(' / ') || '无标签'}
                           </p>
                         </div>
                       </div>
                     </TableCell>
                     <TableCell className="text-xs text-muted-foreground">{p.game}</TableCell>
                     <TableCell className="text-right text-sm">¥{p.pricePerHour}</TableCell>
-                    <TableCell className="text-right text-sm">{p.rating.toFixed(1)}</TableCell>
+                    <TableCell className="text-right text-sm">
+                      {p.reviewCount > 0 ? (
+                        <span className="flex items-center justify-end gap-1">
+                          <Star className="size-3.5 fill-warning text-warning" />
+                          {p.reviewAverage.toFixed(1)}
+                          <span className="text-[11px] text-muted-foreground">({p.reviewCount})</span>
+                        </span>
+                      ) : (
+                        <span className="text-[11px] text-muted-foreground">—</span>
+                      )}
+                    </TableCell>
                     <TableCell className="text-right text-sm">{p.orders}</TableCell>
                     <TableCell className="text-right">
                       <span className="flex items-center justify-end gap-1 text-sm font-semibold text-primary">
                         <Flame className="size-3.5" />
                         {p.score.toLocaleString()}
                       </span>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <button
+                        onClick={() => {
+                          setGenerated(null)
+                          setAccountPlayer(p)
+                        }}
+                        className={
+                          'inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[11px] transition-colors ' +
+                          (p.hasAccount
+                            ? 'border-success/40 bg-success/10 text-success hover:bg-success/20'
+                            : 'border-border bg-muted text-muted-foreground hover:border-primary/50 hover:text-primary')
+                        }
+                        title={p.hasAccount ? `账号：${p.accountUsername}` : '点击生成账号'}
+                      >
+                        <KeyRound className="size-3" />
+                        {p.hasAccount ? p.accountUsername : '未建'}
+                      </button>
                     </TableCell>
                     <TableCell className="text-center">
                       <Badge
@@ -223,6 +305,15 @@ export default function AdminDashboard() {
                           <Power className="size-4" />
                         </IconBtn>
                         <IconBtn
+                          title="账号"
+                          onClick={() => {
+                            setGenerated(null)
+                            setAccountPlayer(p)
+                          }}
+                        >
+                          <KeyRound className="size-4" />
+                        </IconBtn>
+                        <IconBtn
                           title="编辑"
                           onClick={() => {
                             setEditing(p)
@@ -238,9 +329,9 @@ export default function AdminDashboard() {
                     </TableCell>
                   </TableRow>
                 ))}
-                {(players ?? []).length === 0 && (
+                {list.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={9} className="py-12 text-center text-sm text-muted-foreground">
+                    <TableCell colSpan={10} className="py-12 text-center text-sm text-muted-foreground">
                       暂无陪玩数据，点击右上角「新增陪玩」开始
                     </TableCell>
                   </TableRow>
@@ -263,6 +354,23 @@ export default function AdminDashboard() {
         onSubmit={handleSubmit}
         submitting={submitting}
       />
+
+      {/* 账号管理 */}
+      <AccountDialog
+        player={accountPlayer}
+        generated={generated}
+        onClose={() => {
+          setAccountPlayer(null)
+          setGenerated(null)
+        }}
+        onGenerate={handleGenerateAccount}
+        onRevoke={handleRevokeAccount}
+        generating={accountMutations.generateAccount.isPending}
+        revoking={accountMutations.revokeAccount.isPending}
+      />
+
+      {/* 俱乐部设置 */}
+      <ClubSettingsDialog open={clubOpen} onClose={() => setClubOpen(false)} />
 
       {/* 删除确认 */}
       <AlertDialog open={!!deleting} onOpenChange={(o) => !o && setDeleting(null)}>

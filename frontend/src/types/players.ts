@@ -1,3 +1,16 @@
+export interface RatingSummary {
+  average: number
+  count: number
+  distribution: Record<string, number>
+}
+
+export interface RatingItem {
+  id: number
+  stars: number
+  comment: string
+  createdAt: string
+}
+
 export interface Player {
   id: number
   nickname: string
@@ -9,19 +22,40 @@ export interface Player {
   rating: number
   orders: number
   score: number
-  isOnline: boolean
   status: 'active' | 'offline'
   isPinned: boolean
+  /** 用户星级评价聚合 */
+  reviewCount: number
+  reviewAverage: number
   createdAt: string
   updatedAt: string
+}
+
+/** 管理端额外可见的账号信息 */
+export interface AdminPlayer extends Player {
+  accountUsername: string | null
+  hasAccount: boolean
 }
 
 export interface PlayerStats {
   totalPlayers: number
   activePlayers: number
-  onlinePlayers: number
   totalOrders: number
   avgRating: number
+  totalReviews: number
+  avgReviewStars: number
+}
+
+export interface Club {
+  id: number
+  name: string
+  slogan: string
+  description: string
+  avatar: string
+  rating: RatingSummary
+  memberCount: number
+  updatedAt: string
+  rated?: boolean
 }
 
 export interface PlayerQuery {
@@ -50,7 +84,19 @@ export interface PlayerInput {
   rating: number
   orders: number
   score: number
-  isOnline: boolean
   status: 'active' | 'offline'
   isPinned: boolean
+}
+
+export interface GeneratedAccount {
+  id: number
+  nickname: string
+  username: string
+  password: string
+}
+
+export interface PlayerPortalData {
+  player: Player
+  account: { username: string }
+  reviews: { summary: RatingSummary; items: RatingItem[] }
 }

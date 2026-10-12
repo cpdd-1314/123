@@ -1,21 +1,21 @@
 [
   {
-    "pageKey": "ukg5gu",
+    "pageKey": "aycruo",
     "title": "/",
     "url": "/"
   },
   {
-    "pageKey": "cuf7kd",
+    "pageKey": "r9gygx",
     "title": "/admin",
     "url": "/admin"
   },
   {
-    "pageKey": "7lmgbh",
+    "pageKey": "isqk21",
     "title": "/admin/login",
     "url": "/admin/login"
   },
   {
-    "pageKey": "5v26wo",
+    "pageKey": "nsy41d",
     "title": "/player/:id",
     "url": "/player/:id"
   }

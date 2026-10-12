@@ -10,6 +10,8 @@ import Index from './pages/Index'
 import PlayerDetail from './pages/PlayerDetail'
 import AdminLogin from './pages/admin/AdminLogin'
 import AdminDashboard from './pages/admin/AdminDashboard'
+import PlayerLogin from './pages/player/PlayerLogin'
+import PlayerPortal from './pages/player/PlayerPortal'
 import NotFound from './pages/NotFound'
 
 /**
@@ -60,6 +62,8 @@ function AppInner() {
           <Route path="/player/:id" element={<PageTransition transition="fade"><PlayerDetail /></PageTransition>} />
           <Route path="/admin/login" element={<PageTransition transition="fade"><AdminLogin /></PageTransition>} />
           <Route path="/admin" element={<PageTransition transition="slide-fade"><AdminDashboard /></PageTransition>} />
+          <Route path="/player/login" element={<PageTransition transition="fade"><PlayerLogin /></PageTransition>} />
+          <Route path="/player-center" element={<PageTransition transition="slide-fade"><PlayerPortal /></PageTransition>} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<PageTransition transition="fade"><NotFound /></PageTransition>} />
         </AnimatedRoutes>

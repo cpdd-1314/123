@@ -1,6 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import apiClient from '@/lib/api-client'
-import type { Player, PlayerQuery, PlayerStats } from '@/types/players'
+import type {
+  AdminPlayer,
+  GeneratedAccount,
+  Player,
+  PlayerQuery,
+  PlayerStats,
+} from '@/types/players'
 
 /** 排行榜列表 */
 export function usePlayers(query: PlayerQuery) {
@@ -46,11 +52,11 @@ export function usePlayer(id: number | undefined) {
 // ---- 管理端 ----
 
 export function useAdminPlayers(enabled = true) {
-  return useQuery<Player[]>({
+  return useQuery<AdminPlayer[]>({
     queryKey: ['admin-players'],
     queryFn: async () => {
       const { data } = await apiClient.get('/admin/players')
-      return data.data as Player[]
+      return data.data as AdminPlayer[]
     },
     enabled,
     staleTime: 10 * 1000,
@@ -68,7 +74,7 @@ export function usePlayerMutations() {
   const createPlayer = useMutation({
     mutationFn: async (input: Partial<Player>) => {
       const { data } = await apiClient.post('/admin/players', input)
-      return data.data as Player
+      return data.data as AdminPlayer
     },
     onSuccess: invalidate,
   })
@@ -76,7 +82,7 @@ export function usePlayerMutations() {
   const updatePlayer = useMutation({
     mutationFn: async ({ id, input }: { id: number; input: Partial<Player> }) => {
       const { data } = await apiClient.put(`/admin/players/${id}`, input)
-      return data.data as Player
+      return data.data as AdminPlayer
     },
     onSuccess: invalidate,
   })
@@ -91,7 +97,7 @@ export function usePlayerMutations() {
   const toggleStatus = useMutation({
     mutationFn: async ({ id, status }: { id: number; status: 'active' | 'offline' }) => {
       const { data } = await apiClient.patch(`/admin/players/${id}/status`, { status })
-      return data.data as Player
+      return data.data as AdminPlayer
     },
     onSuccess: invalidate,
   })
@@ -99,10 +105,47 @@ export function usePlayerMutations() {
   const togglePin = useMutation({
     mutationFn: async (id: number) => {
       const { data } = await apiClient.patch(`/admin/players/${id}/pin`)
-      return data.data as Player
+      return data.data as AdminPlayer
     },
     onSuccess: invalidate,
   })
 
   return { createPlayer, updatePlayer, deletePlayer, toggleStatus, togglePin }
+}
+
+/** 头像上传（返回可访问 URL） */
+export function useUploadAvatar() {
+  return useMutation({
+    mutationFn: async (file: File) => {
+      const form = new FormData()
+      form.append('file', file)
+      const { data } = await apiClient.post('/admin/media', form, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+      return data.data as { id: number; url: string }
+    },
+  })
+}
+
+/** 陪玩账号管理 */
+export function useAccountMutations() {
+  const queryClient = useQueryClient()
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: ['admin-players'] })
+
+  const generateAccount = useMutation({
+    mutationFn: async ({ id, username }: { id: number; username?: string }) => {
+      const { data } = await apiClient.post(`/admin/players/${id}/account`, { ...(username ? { username } : {}) })
+      return data.data as GeneratedAccount
+    },
+    onSuccess: invalidate,
+  })
+
+  const revokeAccount = useMutation({
+    mutationFn: async (id: number) => {
+      await apiClient.delete(`/admin/players/${id}/account`)
+    },
+    onSuccess: invalidate,
+  })
+
+  return { generateAccount, revokeAccount }
 }

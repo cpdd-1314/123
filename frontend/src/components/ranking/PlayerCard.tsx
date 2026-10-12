@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom'
-import { Clock, Flame, Pin, Star } from 'lucide-react'
+import { Clock, Flame, Pin } from 'lucide-react'
 import { HoverLift } from '@/components/MotionPrimitives'
 import RankBadge from './RankBadge'
+import { StarRating } from './StarRating'
 import { cn } from '@/lib/utils'
 import type { Player } from '@/types/players'
 
@@ -25,21 +26,12 @@ export default function PlayerCard({ player, rank }: { player: Player; rank: num
         )}
 
         <div className="flex items-start gap-3">
-          <div className="relative">
-            <img
-              src={player.avatar}
-              alt={`${player.nickname}的头像`}
-              loading="lazy"
-              className="size-16 rounded-xl border border-border object-cover"
-            />
-            <span
-              className={cn(
-                'absolute -bottom-1 -right-1 size-3.5 rounded-full border-2 border-card',
-                player.isOnline ? 'bg-success' : 'bg-muted-foreground'
-              )}
-              title={player.isOnline ? '在线' : '离线'}
-            />
-          </div>
+          <img
+            src={player.avatar}
+            alt={`${player.nickname}的头像`}
+            loading="lazy"
+            className="size-16 rounded-xl border border-border object-cover"
+          />
 
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
@@ -66,16 +58,16 @@ export default function PlayerCard({ player, rank }: { player: Player; rank: num
           {player.description || '这位陪玩还没有留下简介。'}
         </p>
 
-        <div className="mt-3 flex items-center justify-between border-t border-border/60 pt-3">
-          <div className="flex items-center gap-3 text-xs text-muted-foreground">
-            <span className="flex items-center gap-1">
-              <Star className="size-3.5 fill-warning text-warning" />
-              <span className="font-semibold text-foreground">{player.rating.toFixed(1)}</span>
-            </span>
-            <span className="flex items-center gap-1 text-primary">
-              <Flame className="size-3.5" />
-              {player.score.toLocaleString()}
-            </span>
+        <div className="mt-3 flex items-end justify-between border-t border-border/60 pt-3">
+          <div className="flex flex-col gap-1">
+            <StarRating value={player.reviewAverage} size={13} />
+            <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+              <span className="flex items-center gap-1 text-primary">
+                <Flame className="size-3.5" />
+                {player.score.toLocaleString()}
+              </span>
+              <span>{player.reviewCount > 0 ? `${player.reviewCount} 人评` : '暂无评价'}</span>
+            </div>
           </div>
           <span className="flex items-center gap-0.5 text-sm font-bold text-foreground">
             <Clock className="size-3.5 text-muted-foreground" />¥{player.pricePerHour}

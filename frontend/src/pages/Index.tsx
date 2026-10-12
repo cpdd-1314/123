@@ -3,6 +3,7 @@ import { Swords } from 'lucide-react'
 import { FadeIn, Stagger } from '@/components/MotionPrimitives'
 import FilterBar from '@/components/ranking/FilterBar'
 import HeroStats from '@/components/ranking/HeroStats'
+import ClubCard from '@/components/ranking/ClubCard'
 import Podium from '@/components/ranking/Podium'
 import PlayerCard from '@/components/ranking/PlayerCard'
 import { usePlayers, useStats } from '@/hooks/use-players'
@@ -47,6 +48,9 @@ export default function Index() {
         <div className="mt-8">
           <HeroStats stats={stats} />
         </div>
+
+        {/* 俱乐部名片 + 评分 */}
+        <ClubCard />
 
         {/* TOP3 领奖台（无筛选时展示） */}
         {!isFiltered && topThree.length === 3 && (

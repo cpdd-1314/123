@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express'
 import { z } from 'zod'
 import bcrypt from 'bcryptjs'
+import { randomInt } from 'node:crypto'
 import { pool } from '../db'
 import { env } from '../config/env'
 import { AppError } from '../middleware/errorHandler'
@@ -15,9 +16,9 @@ import { broadcast } from './events'
 import {
   createPlayerSchema,
   loginSchema,
-  toPlayer,
+  toAdminPlayer,
   updatePlayerSchema,
-  type Player,
+  type AdminPlayer,
 } from '../types/players.types'
 
 export const adminRouter: Router = Router()
@@ -58,14 +59,25 @@ adminRouter.get('/me', requireAdmin, (req: Request, res: Response) => {
 
 // ---- 以下接口均需登录 ----
 
+const ADMIN_PLAYER_SELECT = `
+  SELECT p.*,
+         COALESCE(r.cnt, 0)::int   AS review_count,
+         COALESCE(r.avg, 0)::float AS review_average
+  FROM players p
+  LEFT JOIN (
+    SELECT target_id, COUNT(*)::int AS cnt, ROUND(AVG(stars)::numeric, 1) AS avg
+    FROM ratings WHERE target_type = 'player' GROUP BY target_id
+  ) r ON r.target_id = p.id
+`
+
 /**
- * GET /api/admin/players — 管理端列表（含已下架）
+ * GET /api/admin/players — 管理端列表（含已下架与账号信息）
  */
 adminRouter.get('/players', requireAdmin, async (_req: Request, res: Response) => {
   const { rows } = await pool.query<Record<string, unknown>>(
-    'SELECT * FROM players ORDER BY is_pinned DESC, score DESC, id ASC'
+    `${ADMIN_PLAYER_SELECT} ORDER BY p.is_pinned DESC, p.score DESC, p.id ASC`
   )
-  const players: Player[] = rows.map(toPlayer)
+  const players: AdminPlayer[] = rows.map(toAdminPlayer)
   res.json({ status: 'ok', data: players, total: players.length })
 })
 
@@ -77,8 +89,8 @@ adminRouter.post('/players', requireAdmin, validate(createPlayerSchema), async (
 
   const { rows } = await pool.query<Record<string, unknown>>(
     `INSERT INTO players
-       (nickname, avatar, game, tags, description, price_per_hour, rating, orders, score, is_online, status, is_pinned)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
+       (nickname, avatar, game, tags, description, price_per_hour, rating, orders, score, status, is_pinned)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
      RETURNING *`,
     [
       input.nickname,
@@ -90,14 +102,13 @@ adminRouter.post('/players', requireAdmin, validate(createPlayerSchema), async (
       input.rating,
       input.orders,
       input.score,
-      input.isOnline,
       input.status,
       input.isPinned,
     ]
   )
 
   broadcast({ type: 'players-changed', payload: { action: 'created', id: rows[0].id } })
-  res.status(201).json({ status: 'ok', data: toPlayer(rows[0]) })
+  res.status(201).json({ status: 'ok', data: toAdminPlayer(rows[0]) })
 })
 
 /**
@@ -120,7 +131,6 @@ adminRouter.put('/players/:id', requireAdmin, validate(updatePlayerSchema), asyn
     rating: 'rating',
     orders: 'orders',
     score: 'score',
-    isOnline: 'is_online',
     status: 'status',
     isPinned: 'is_pinned',
   }
@@ -148,7 +158,7 @@ adminRouter.put('/players/:id', requireAdmin, validate(updatePlayerSchema), asyn
     throw new AppError(404, '陪玩不存在')
   }
   broadcast({ type: 'players-changed', payload: { action: 'updated', id } })
-  res.json({ status: 'ok', data: toPlayer(rows[0]) })
+  res.json({ status: 'ok', data: toAdminPlayer(rows[0]) })
 })
 
 /**
@@ -186,7 +196,7 @@ adminRouter.patch('/players/:id/status', requireAdmin, async (req: Request, res:
     throw new AppError(404, '陪玩不存在')
   }
   broadcast({ type: 'players-changed', payload: { action: 'status-changed', id } })
-  res.json({ status: 'ok', data: toPlayer(rows[0]) })
+  res.json({ status: 'ok', data: toAdminPlayer(rows[0]) })
 })
 
 /**
@@ -202,5 +212,88 @@ adminRouter.patch('/players/:id/pin', requireAdmin, async (req: Request, res: Re
     throw new AppError(404, '陪玩不存在')
   }
   broadcast({ type: 'players-changed', payload: { action: 'pin-toggled', id } })
-  res.json({ status: 'ok', data: toPlayer(rows[0]) })
+  res.json({ status: 'ok', data: toAdminPlayer(rows[0]) })
+})
+
+// ---- 陪玩账号管理 ----
+
+const ACCOUNT_ALPHABET = 'abcdefghjkmnpqrstuvwxyz23456789'
+
+function randomPassword(length = 8): string {
+  let out = ''
+  for (let i = 0; i < length; i++) {
+    out += ACCOUNT_ALPHABET[randomInt(ACCOUNT_ALPHABET.length)]
+  }
+  return out
+}
+
+const accountSchema = z.object({
+  username: z
+    .string()
+    .trim()
+    .min(3, '账号至少 3 个字符')
+    .max(30, '账号最多 30 个字符')
+    .regex(/^[a-zA-Z0-9_]+$/, '账号仅支持字母、数字、下划线')
+    .optional(),
+})
+
+/**
+ * POST /api/admin/players/:id/account — 生成/重置陪玩账号（密码仅返回一次）
+ */
+adminRouter.post('/players/:id/account', requireAdmin, validate(accountSchema), async (req: Request, res: Response) => {
+  const id = Number(req.params.id)
+  if (!Number.isInteger(id) || id <= 0) {
+    throw new AppError(400, '无效的ID')
+  }
+
+  const input = req.body as z.infer<typeof accountSchema>
+  const username = input.username ?? `peiwan${id}`
+
+  const dup = await pool.query('SELECT 1 FROM players WHERE account_username = $1 AND id <> $2', [
+    username,
+    id,
+  ])
+  if (dup.rows.length > 0) {
+    throw new AppError(409, '该账号名已被其他陪玩使用')
+  }
+
+  const password = randomPassword()
+  const hash = bcrypt.hashSync(password, 10)
+
+  const { rows } = await pool.query<Record<string, unknown>>(
+    `UPDATE players SET account_username = $1, account_password_hash = $2, updated_at = NOW()
+     WHERE id = $3 RETURNING id, nickname, account_username`,
+    [username, hash, id]
+  )
+  if (rows.length === 0) {
+    throw new AppError(404, '陪玩不存在')
+  }
+
+  broadcast({ type: 'players-changed', payload: { action: 'account-changed', id } })
+  res.json({
+    status: 'ok',
+    data: {
+      id: rows[0].id,
+      nickname: rows[0].nickname,
+      username,
+      password,
+    },
+  })
+})
+
+/**
+ * DELETE /api/admin/players/:id/account — 注销陪玩账号
+ */
+adminRouter.delete('/players/:id/account', requireAdmin, async (req: Request, res: Response) => {
+  const id = Number(req.params.id)
+  const { rowCount } = await pool.query(
+    `UPDATE players SET account_username = NULL, account_password_hash = NULL, updated_at = NOW()
+     WHERE id = $1`,
+    [id]
+  )
+  if (rowCount === 0) {
+    throw new AppError(404, '陪玩不存在')
+  }
+  broadcast({ type: 'players-changed', payload: { action: 'account-changed', id } })
+  res.json({ status: 'ok' })
 })

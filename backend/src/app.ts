@@ -11,6 +11,9 @@ import { systemRouter } from './modules/system'
 import { playersRouter, statsRouter } from './modules/players'
 import { adminRouter } from './modules/admin'
 import { eventsRouter } from './modules/events'
+import { mediaRouter } from './modules/media'
+import { clubRouter } from './modules/club'
+import { playerPortalRouter } from './modules/player-portal'
 
 export const createApp = (): Application => {
   const app = express()
@@ -29,8 +32,8 @@ export const createApp = (): Application => {
   )
 
   // Body parsing and compression
-  app.use(express.json())
-  app.use(express.urlencoded({ extended: true }))
+  app.use(express.json({ limit: '1mb' }))
+  app.use(express.urlencoded({ extended: true, limit: '1mb' }))
   app.use(compression())
 
   // API routes - System & Health
@@ -40,6 +43,15 @@ export const createApp = (): Application => {
   app.use(`${env.API_PREFIX}/players`, playersRouter)
   app.use(`${env.API_PREFIX}/stats`, statsRouter)
   app.use(`${env.API_PREFIX}/admin`, adminRouter)
+
+  // 俱乐部信息与评价
+  app.use(`${env.API_PREFIX}/club`, clubRouter)
+
+  // 陪玩端账号登录与个人数据
+  app.use(`${env.API_PREFIX}/player`, playerPortalRouter)
+
+  // 图片上传 / 访问（内部路径：/admin/media、/media/:id）
+  app.use(env.API_PREFIX, mediaRouter)
 
   // Realtime (SSE)
   app.use(`${env.API_PREFIX}/events`, eventsRouter)

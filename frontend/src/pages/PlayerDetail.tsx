@@ -1,11 +1,17 @@
 import { useParams, Link } from 'react-router-dom'
-import { ArrowLeft, Clock, Flame, Pin, Star, Wifi, WifiOff } from 'lucide-react'
+import { ArrowLeft, Clock, Flame, Pin, Star } from 'lucide-react'
 import { FadeIn } from '@/components/MotionPrimitives'
+import RatingSection from '@/components/ranking/RatingSection'
 import { usePlayer } from '@/hooks/use-players'
+import { usePlayerRatings, useSubmitPlayerRating } from '@/hooks/use-ratings'
+import { getErrorMessage } from '@/lib/api-client'
 
 export default function PlayerDetail() {
   const { id } = useParams<{ id: string }>()
-  const { data: player, isLoading, isError } = usePlayer(Number(id))
+  const playerId = Number(id)
+  const { data: player, isLoading, isError } = usePlayer(playerId)
+  const { data: ratingData } = usePlayerRatings(playerId)
+  const submitRating = useSubmitPlayerRating()
 
   if (isLoading) {
     return (
@@ -24,6 +30,10 @@ export default function PlayerDetail() {
         </Link>
       </div>
     )
+  }
+
+  const handleSubmit = (stars: number, comment: string) => {
+    submitRating.mutate({ playerId, stars, comment })
   }
 
   return (
@@ -56,16 +66,6 @@ export default function PlayerDetail() {
                   置顶推荐
                 </span>
               )}
-              <span
-                className={
-                  player.isOnline
-                    ? 'flex items-center gap-1 rounded-md bg-success/15 px-2 py-0.5 text-[11px] font-semibold text-success'
-                    : 'flex items-center gap-1 rounded-md bg-muted px-2 py-0.5 text-[11px] font-semibold text-muted-foreground'
-                }
-              >
-                {player.isOnline ? <Wifi className="size-3" /> : <WifiOff className="size-3" />}
-                {player.isOnline ? '在线' : '离线'}
-              </span>
             </div>
             <p className="mt-1.5 text-sm text-muted-foreground">
               {player.game} · 入驻于 {new Date(player.createdAt).toLocaleDateString('zh-CN')}
@@ -75,7 +75,7 @@ export default function PlayerDetail() {
 
         {/* 数据面板 */}
         <div className="grid grid-cols-2 gap-px bg-border/60 sm:grid-cols-3">
-          <StatCell icon={Star} label="评分" value={player.rating.toFixed(1)} highlight />
+          <StatCell icon={Star} label="综合评分" value={(ratingData?.summary.average ?? player.reviewAverage).toFixed(1)} highlight />
           <StatCell icon={Flame} label="热度积分" value={player.score.toLocaleString()} highlight />
           <StatCell icon={Clock} label="时价" value={`¥${player.pricePerHour}`} />
         </div>
@@ -106,6 +106,17 @@ export default function PlayerDetail() {
             {player.description || '这位陪玩还没有留下简介。'}
           </p>
         </div>
+
+        {/* 星级评价 */}
+        <RatingSection
+          targetName="这位陪玩"
+          summary={ratingData?.summary}
+          items={ratingData?.items}
+          rated={ratingData?.rated}
+          onSubmit={handleSubmit}
+          isSubmitting={submitRating.isPending}
+          error={submitRating.isError ? getErrorMessage(submitRating.error) : undefined}
+        />
 
         {/* 底部信息 */}
         <div className="flex items-center justify-between border-t border-border/60 px-6 py-4">

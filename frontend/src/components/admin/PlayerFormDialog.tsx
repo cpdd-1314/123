@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Loader2 } from 'lucide-react'
+import { useRef, useState } from 'react'
+import { Loader2, Upload } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
@@ -19,6 +19,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { useUploadAvatar } from '@/hooks/use-players'
+import { getErrorMessage } from '@/lib/api-client'
 import { GAME_OPTIONS, type Player, type PlayerInput } from '@/types/players'
 
 interface PlayerFormValues {
@@ -31,7 +33,6 @@ interface PlayerFormValues {
   rating: number
   orders: number
   score: number
-  isOnline: boolean
   status: 'active' | 'offline'
   isPinned: boolean
 }
@@ -46,7 +47,6 @@ const emptyValues: PlayerFormValues = {
   rating: 5,
   orders: 0,
   score: 0,
-  isOnline: true,
   status: 'active',
   isPinned: false,
 }
@@ -63,7 +63,6 @@ function toFormValues(player?: Player): PlayerFormValues {
     rating: player.rating,
     orders: player.orders,
     score: player.score,
-    isOnline: player.isOnline,
     status: player.status,
     isPinned: player.isPinned,
   }
@@ -85,10 +84,27 @@ export default function PlayerFormDialog({
 }) {
   // 表单状态由初始 prop 决定；父组件通过 key 重挂载实现不同陪玩间的重置
   const [values, setValues] = useState<PlayerFormValues>(() => toFormValues(player ?? undefined))
+  const [uploadError, setUploadError] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const uploadAvatar = useUploadAvatar()
   const isEdit = !!player
 
   const set = <K extends keyof PlayerFormValues>(key: K, value: PlayerFormValues[K]) =>
     setValues((v) => ({ ...v, [key]: value }))
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploadError(null)
+    try {
+      const result = await uploadAvatar.mutateAsync(file)
+      set('avatar', result.url)
+    } catch (err) {
+      setUploadError(getErrorMessage(err))
+    } finally {
+      if (fileInputRef.current) fileInputRef.current.value = ''
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -106,7 +122,6 @@ export default function PlayerFormDialog({
       rating: Number(values.rating),
       orders: Number(values.orders),
       score: Number(values.score),
-      isOnline: values.isOnline,
       status: values.status,
       isPinned: values.isPinned,
     }
@@ -151,17 +166,48 @@ export default function PlayerFormDialog({
             </div>
           </div>
 
+          {/* 头像上传 */}
           <div className="space-y-1.5">
-            <Label htmlFor="pf-avatar">头像地址</Label>
+            <Label>头像</Label>
             <div className="flex items-center gap-3">
-              <img src={values.avatar || '/avatars/01.svg'} alt="头像预览" className="size-11 rounded-lg border border-border object-cover" />
-              <Input
-                id="pf-avatar"
-                value={values.avatar}
-                onChange={(e) => set('avatar', e.target.value)}
-                placeholder="/avatars/01.svg 或图片URL"
+              <img
+                src={values.avatar || '/avatars/01.svg'}
+                alt="头像预览"
+                className="size-14 shrink-0 rounded-lg border border-border object-cover"
+              />
+              <div className="flex-1 space-y-2">
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={uploadAvatar.isPending}
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    {uploadAvatar.isPending ? (
+                      <><Loader2 className="mr-1.5 size-3.5 animate-spin" />上传中…</>
+                    ) : (
+                      <><Upload className="mr-1.5 size-3.5" />上传图片</>
+                    )}
+                  </Button>
+                  <span className="text-[11px] text-muted-foreground">PNG/JPG/WEBP ≤ 3MB</span>
+                </div>
+                <Input
+                  value={values.avatar}
+                  onChange={(e) => set('avatar', e.target.value)}
+                  placeholder="也可直接填写图片地址"
+                  className="text-xs"
+                />
+              </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml"
+                className="hidden"
+                onChange={handleFileChange}
               />
             </div>
+            {uploadError && <p className="text-[11px] text-destructive">{uploadError}</p>}
           </div>
 
           <div className="space-y-1.5">
@@ -232,10 +278,6 @@ export default function PlayerFormDialog({
           </div>
 
           <div className="flex flex-wrap items-center gap-6 rounded-lg border border-border/60 bg-background/40 p-3">
-            <div className="flex items-center gap-2">
-              <Switch id="pf-online" checked={values.isOnline} onCheckedChange={(v) => set('isOnline', v)} />
-              <Label htmlFor="pf-online" className="text-xs">在线</Label>
-            </div>
             <div className="flex items-center gap-2">
               <Switch id="pf-pinned" checked={values.isPinned} onCheckedChange={(v) => set('isPinned', v)} />
               <Label htmlFor="pf-pinned" className="text-xs">置顶推荐</Label>

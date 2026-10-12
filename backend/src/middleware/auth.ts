@@ -8,6 +8,7 @@ const COOKIE_NAME = 'peiwan_token'
 export interface AdminPayload {
   sub: string
   username: string
+  role: 'admin'
 }
 
 /** 从请求 cookie 中解析 JWT，失败抛 401 */
@@ -25,15 +26,19 @@ export function requireAdmin(req: Request, _res: Response, next: NextFunction): 
 
   try {
     const payload = jwt.verify(token, env.JWT_SECRET) as AdminPayload
+    if (payload.role !== 'admin') {
+      throw new AppError(401, '登录已过期，请重新登录')
+    }
     req.admin = payload
     next()
-  } catch {
+  } catch (err) {
+    if (err instanceof AppError) throw err
     throw new AppError(401, '登录已过期，请重新登录')
   }
 }
 
 export function signAdminToken(username: string): string {
-  return jwt.sign({ sub: username, username }, env.JWT_SECRET, {
+  return jwt.sign({ sub: username, username, role: 'admin' }, env.JWT_SECRET, {
     expiresIn: env.JWT_EXPIRES_IN as jwt.SignOptions['expiresIn'],
   })
 }
@@ -52,7 +57,7 @@ export function clearAuthCookie(res: Response): void {
   res.clearCookie(COOKIE_NAME, { path: '/' })
 }
 
-function parseCookie(header: string | undefined, name: string): string | null {
+export function parseCookie(header: string | undefined, name: string): string | null {
   if (!header) return null
   for (const part of header.split(';')) {
     const [key, ...rest] = part.trim().split('=')

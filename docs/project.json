@@ -3,6 +3,6 @@
   "sub_project_type": "",
   "name": "Peiwan Rank",
   "app_slug": "peiwan-rank",
-  "version_description": "Remove ordering features, keep leaderboard only",
+  "version_description": "Add avatar upload, player accounts and star ratings",
   "preview_type": "pc"
 }

@@ -34,6 +34,14 @@ export function useRealtimeSync() {
             queryClient.invalidateQueries({ queryKey: ['players'] })
             queryClient.invalidateQueries({ queryKey: ['stats'] })
             queryClient.invalidateQueries({ queryKey: ['player'] })
+            queryClient.invalidateQueries({ queryKey: ['player-ratings'] })
+            queryClient.invalidateQueries({ queryKey: ['admin-players'] })
+          }
+          if (data.type === 'stats-changed') {
+            // 俱乐部资料 / 俱乐部评价变更
+            queryClient.invalidateQueries({ queryKey: ['club'] })
+            queryClient.invalidateQueries({ queryKey: ['club-ratings'] })
+            queryClient.invalidateQueries({ queryKey: ['stats'] })
           }
         } catch {
           // 忽略心跳/解析失败
