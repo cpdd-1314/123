@@ -19,6 +19,9 @@ services:
         fromDatabase:
           name: peiwan-db
           property: connectionString
+      # 允许的后台写操作来源（同源请求自动放行，此处额外放行 Render 域名）
+      - key: TRUSTED_ORIGINS
+        value: https://peiwan-rank.onrender.com,https://*.onrender.com
 
 databases:
   - name: peiwan-db

@@ -14,6 +14,7 @@ import { eventsRouter } from './modules/events'
 import { mediaRouter } from './modules/media'
 import { clubRouter } from './modules/club'
 import { playerPortalRouter } from './modules/player-portal'
+import { ordersRouter, publicOrdersRouter } from './modules/orders'
 
 export const createApp = (): Application => {
   const app = express()
@@ -49,6 +50,12 @@ export const createApp = (): Application => {
 
   // 陪玩端账号登录与个人数据
   app.use(`${env.API_PREFIX}/player`, playerPortalRouter)
+
+  // 订单：管理员发单（/admin/orders） + 陪玩接单（/player/orders）
+  app.use(env.API_PREFIX, ordersRouter)
+
+  // 订单大厅（公开只读）
+  app.use(`${env.API_PREFIX}/orders`, publicOrdersRouter)
 
   // 图片上传 / 访问（内部路径：/admin/media、/media/:id）
   app.use(env.API_PREFIX, mediaRouter)

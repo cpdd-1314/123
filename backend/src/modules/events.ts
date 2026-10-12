@@ -5,7 +5,7 @@ import { createLogger } from '../config/logger'
 const logger = createLogger('Realtime')
 
 export interface RealtimeEvent {
-  type: 'players-changed' | 'stats-changed'
+  type: 'players-changed' | 'stats-changed' | 'orders-changed'
   payload?: Record<string, unknown>
 }
 

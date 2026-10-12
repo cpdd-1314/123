@@ -1,5 +1,5 @@
 import { Navigate, useNavigate } from 'react-router-dom'
-import { Clock, Flame, LogOut, Star, User } from 'lucide-react'
+import { CheckCircle2, ClipboardList, Clock, Flame, LogOut, Star, User } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -7,12 +7,19 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { FadeIn } from '@/components/MotionPrimitives'
 import { StarRating } from '@/components/ranking/StarRating'
 import { usePlayerAuth, usePlayerLogout } from '@/hooks/use-player-portal'
+import { ORDER_STATUS_LABEL, useCompleteOrder, usePlayerOrders, useTakeOrder } from '@/hooks/use-orders'
+import { getErrorMessage } from '@/lib/api-client'
 
 /** 陪玩个人中心：查看自己的资料、热度与收到的评价 */
 export default function PlayerPortal() {
   const navigate = useNavigate()
   const { data, isLoading, isError } = usePlayerAuth()
   const logoutMutation = usePlayerLogout()
+
+  // 订单：可见订单 + 接单 + 完成
+  const { data: orders } = usePlayerOrders(!!data)
+  const takeOrder = useTakeOrder()
+  const completeOrder = useCompleteOrder()
 
   if (!isLoading && (isError || !data)) {
     return <Navigate to="/player/login" replace />
@@ -86,6 +93,109 @@ export default function PlayerPortal() {
           <div className="border-t border-border/60 px-6 py-4">
             <p className="text-xs leading-relaxed text-foreground/85">{player.description}</p>
           </div>
+        )}
+      </FadeIn>
+
+      {/* 我的订单：接单与完成 */}
+      <FadeIn className="mt-6 overflow-hidden rounded-2xl border border-border bg-card">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/60 px-6 py-4">
+          <h2 className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
+            <ClipboardList className="size-4 text-primary" />
+            我的订单
+          </h2>
+          <span className="text-xs text-muted-foreground">
+            共 {(orders ?? []).length} 条 · 完成订单可提升人气
+          </span>
+        </div>
+
+        {(orders ?? []).length === 0 ? (
+          <p className="px-6 py-10 text-center text-xs text-muted-foreground">
+            暂时没有可接的订单，等待管理员发布
+          </p>
+        ) : (
+          <ul className="divide-y divide-border/60">
+            {(orders ?? []).map((o) => {
+              const isMine = o.takenById === player.id
+              const canTake = o.status === 'open' && (o.assignedPlayerId === null || o.assignedPlayerId === player.id)
+              const canComplete = o.status === 'taken' && isMine
+
+              return (
+                <li key={o.id} className="px-6 py-4">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="text-sm font-medium text-foreground">{o.title}</p>
+                        <Badge
+                          variant="outline"
+                          className={
+                            o.status === 'open'
+                              ? 'border-primary/50 text-primary'
+                              : o.status === 'taken'
+                                ? 'border-amber-500/50 text-amber-500'
+                                : 'border-emerald-500/50 text-emerald-500'
+                          }
+                        >
+                          {ORDER_STATUS_LABEL[o.status]}
+                        </Badge>
+                        {o.assignedPlayerId === player.id && (
+                          <Badge variant="outline" className="border-primary/50 text-primary">
+                            指定给我
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="mt-1.5 text-xs text-muted-foreground">
+                        {o.game} · {o.duration} 小时 · ¥{o.price}
+                        {o.takenByName ? ` · 接单人：${o.takenByName}` : ''}
+                      </p>
+                      {o.description && (
+                        <p className="mt-1.5 text-xs leading-relaxed text-foreground/80">{o.description}</p>
+                      )}
+                      {o.customerNote && isMine && (
+                        <p className="mt-1.5 text-xs text-primary">客户备注：{o.customerNote}</p>
+                      )}
+                    </div>
+
+                    <div className="shrink-0">
+                      {canTake && (
+                        <Button
+                          size="sm"
+                          disabled={takeOrder.isPending}
+                          onClick={() =>
+                            takeOrder.mutate(o.id, {
+                              onSuccess: () => toast.success('接单成功！'),
+                              onError: (err) => toast.error(getErrorMessage(err)),
+                            })
+                          }
+                        >
+                          接单
+                        </Button>
+                      )}
+                      {canComplete && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={completeOrder.isPending}
+                          onClick={() =>
+                            completeOrder.mutate(o.id, {
+                              onSuccess: () => toast.success('订单已完成，人气 +100'),
+                              onError: (err) => toast.error(getErrorMessage(err)),
+                            })
+                          }
+                        >
+                          <CheckCircle2 className="size-4" />
+                          标记完成
+                        </Button>
+                      )}
+                      {o.status === 'taken' && !isMine && (
+                        <span className="text-xs text-muted-foreground">已被接单</span>
+                      )}
+                      {o.status === 'done' && <span className="text-xs text-emerald-500">已完成</span>}
+                    </div>
+                  </div>
+                </li>
+              )
+            })}
+          </ul>
         )}
       </FadeIn>
 

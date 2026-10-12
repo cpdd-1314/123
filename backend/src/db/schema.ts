@@ -82,6 +82,32 @@ ON CONFLICT (id) DO NOTHING;
 UPDATE club SET name = '𝓮𝓵𝓮𝓿𝓮𝓷十一愿club', updated_at = NOW()
 WHERE id = 1 AND name = '巅峰陪玩俱乐部';
 
+-- 订单表：管理员发布订单，陪玩可查看并接单
+CREATE TABLE IF NOT EXISTS orders (
+  id             SERIAL PRIMARY KEY,
+  title          VARCHAR(80)  NOT NULL,
+  game           VARCHAR(50)  NOT NULL,
+  description    TEXT         NOT NULL DEFAULT '',
+  price          INTEGER      NOT NULL DEFAULT 0 CHECK (price >= 0),
+  duration       INTEGER      NOT NULL DEFAULT 1 CHECK (duration > 0),  -- 小时
+  customer_note  VARCHAR(200) NOT NULL DEFAULT '',
+  status         VARCHAR(20)  NOT NULL DEFAULT 'open'
+                 CHECK (status IN ('open', 'taken', 'done', 'canceled')),
+  -- 指定陪玩：为空表示所有陪玩可见可接
+  assigned_player_id INTEGER REFERENCES players(id) ON DELETE SET NULL,
+  -- 接单陪玩
+  taken_by_id    INTEGER REFERENCES players(id) ON DELETE SET NULL,
+  taken_by_name  VARCHAR(50),
+  taken_at       TIMESTAMPTZ,
+  completed_at   TIMESTAMPTZ,
+  created_at     TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+  updated_at     TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_orders_status    ON orders (status);
+CREATE INDEX IF NOT EXISTS idx_orders_assigned  ON orders (assigned_player_id);
+CREATE INDEX IF NOT EXISTS idx_orders_created   ON orders (created_at DESC);
+
 -- 种子数据（仅在表为空时插入）
 INSERT INTO players (nickname, avatar, game, tags, description, price_per_hour, rating, orders, score, status, is_pinned)
 SELECT * FROM (VALUES

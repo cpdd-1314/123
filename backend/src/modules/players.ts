@@ -4,6 +4,7 @@ import { pool } from '../db'
 import { AppError } from '../middleware/errorHandler'
 import { validate } from '../middleware/validation'
 import { fingerprint, getRatingSummary, hasRated, insertRating, listRatings } from './ratings'
+import { broadcast } from './events'
 import {
   createRatingSchema,
   listPlayersQuerySchema,
@@ -14,11 +15,26 @@ import {
 
 export const playersRouter: Router = Router()
 
-const SORT_COLUMN: Record<string, string> = {
-  score: 'score',
-  rating: 'rating',
-  orders: 'orders',
-  price: 'price_per_hour',
+/**
+ * 排序字段映射。
+ * - score / orders / price 直接使用 players 表字段
+ * - rating：优先使用用户真实评价均分（review_average），
+ *   无人评价时回落到玩家资料里的初始评分，避免新陪玩因 0 评价沉底
+ */
+/**
+ * 排序字段映射。
+ * - score / orders / price 直接使用 players 表字段
+ * - rating：优先使用用户真实评价均分（review_average），
+ *   无人评价时回落到玩家资料里的初始评分，避免新陪玩因 0 评价沉底
+ *
+ * ⚠️ 注意：orders 同时是本库的一张真实表名，PostgreSQL 会把 `p.orders`
+ * 解析为表引用而非列，必须加双引号强制按列处理，否则排序结果完全错乱。
+ */
+const SORT_EXPRESSION: Record<string, string> = {
+  score: 'p."score"',
+  orders: 'p."orders"',
+  price: 'p."price_per_hour"',
+  rating: `CASE WHEN COALESCE(r.cnt, 0) > 0 THEN COALESCE(r.avg, 0) ELSE p."rating" END`,
 }
 
 /** 带用户评价聚合的查询片段（review_count / review_average） */
@@ -58,11 +74,22 @@ playersRouter.get('/', async (req: Request, res: Response) => {
   }
 
   const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : ''
-  const column = SORT_COLUMN[query.sort] ?? 'score'
+  const expression = SORT_EXPRESSION[query.sort] ?? 'p."score"'
   const direction = query.order === 'asc' ? 'ASC' : 'DESC'
 
+  // 分页（未传 limit 时返回全部，保持排行榜完整展示）
+  let pagination = ''
+  if (query.limit !== undefined) {
+    params.push(query.limit)
+    pagination += ` LIMIT $${params.length}`
+    if (query.offset > 0) {
+      params.push(query.offset)
+      pagination += ` OFFSET $${params.length}`
+    }
+  }
+
   const { rows } = await pool.query<Record<string, unknown>>(
-    `${PLAYER_SELECT} ${where} ORDER BY p.is_pinned DESC, ${column} ${direction}, p.id ASC`,
+    `${PLAYER_SELECT} ${where} ORDER BY p.is_pinned DESC, ${expression} ${direction}, p.id ASC${pagination}`,
     params
   )
 
@@ -109,6 +136,11 @@ playersRouter.post('/:id/ratings', validate(createRatingSchema), async (req: Req
   }
 
   const summary = await getRatingSummary('player', id)
+
+  // 广播评价变更：排行榜评分与统计需要实时刷新
+  broadcast({ type: 'players-changed', payload: { action: 'rated', id } })
+  broadcast({ type: 'stats-changed', payload: { target: 'player', id } })
+
   res.status(201).json({ status: 'ok', data: summary })
 })
 

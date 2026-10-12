@@ -78,7 +78,7 @@ const ADMIN_PLAYER_SELECT = `
  */
 adminRouter.get('/players', requireAdmin, async (_req: Request, res: Response) => {
   const { rows } = await pool.query<Record<string, unknown>>(
-    `${ADMIN_PLAYER_SELECT} ORDER BY p.is_pinned DESC, p.score DESC, p.id ASC`
+    `${ADMIN_PLAYER_SELECT} ORDER BY p.is_pinned DESC, p."score" DESC, p.id ASC`
   )
   const players: AdminPlayer[] = rows.map(toAdminPlayer)
   res.json({ status: 'ok', data: players, total: players.length })

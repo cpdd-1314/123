@@ -32,6 +32,9 @@ const envSchema = z.object({
   JWT_EXPIRES_IN: z.string().default('12h'),
   ADMIN_USERNAME: z.string().default('admin'),
   ADMIN_PASSWORD: z.string().min(4).default('admin123'),
+
+  // 可信来源白名单（逗号分隔，支持 * 通配）。同源请求始终放行，此处用于额外放行跨域来源。
+  TRUSTED_ORIGINS: z.string().default(''),
 })
 
 const parseEnv = () => {
@@ -47,6 +50,7 @@ const parseEnv = () => {
     JWT_EXPIRES_IN: nonEmpty('JWT_EXPIRES_IN'),
     ADMIN_USERNAME: nonEmpty('ADMIN_USERNAME'),
     ADMIN_PASSWORD: nonEmpty('ADMIN_PASSWORD'),
+    TRUSTED_ORIGINS: nonEmpty('TRUSTED_ORIGINS'),
   }
 
   const result = envSchema.safeParse(source)

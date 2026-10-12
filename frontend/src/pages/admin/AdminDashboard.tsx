@@ -43,8 +43,10 @@ import CountUp from '@/components/reactbits/CountUp'
 import PlayerFormDialog from '@/components/admin/PlayerFormDialog'
 import AccountDialog from '@/components/admin/AccountDialog'
 import ClubSettingsDialog from '@/components/admin/ClubSettingsDialog'
+import OrderFormDialog from '@/components/admin/OrderFormDialog'
 import { useAdminAuth, useLogout } from '@/hooks/use-admin-auth'
 import { useAccountMutations, useAdminPlayers, usePlayerMutations } from '@/hooks/use-players'
+import { ORDER_STATUS_LABEL, useAdminOrders, useDeleteOrder, useUpdateOrder, type Order } from '@/hooks/use-orders'
 import { getErrorMessage } from '@/lib/api-client'
 import type { AdminPlayer, GeneratedAccount, PlayerInput } from '@/types/players'
 
@@ -55,6 +57,14 @@ export default function AdminDashboard() {
   const { data: players, isLoading } = useAdminPlayers(!!me)
   const mutations = usePlayerMutations()
   const accountMutations = useAccountMutations()
+
+  // 订单管理
+  const { data: orders } = useAdminOrders()
+  const updateOrder = useUpdateOrder()
+  const deleteOrder = useDeleteOrder()
+  const [orderFormOpen, setOrderFormOpen] = useState(false)
+  const [editingOrder, setEditingOrder] = useState<Order | null>(null)
+  const [deletingOrder, setDeletingOrder] = useState<Order | null>(null)
 
   const [formOpen, setFormOpen] = useState(false)
   const [editing, setEditing] = useState<AdminPlayer | null>(null)
@@ -342,6 +352,120 @@ export default function AdminDashboard() {
         )}
       </div>
 
+      {/* 订单管理 */}
+      <div className="mt-8 overflow-hidden rounded-xl border border-border bg-card">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/60 px-4 py-3">
+          <div>
+            <h2 className="text-sm font-semibold text-foreground">订单管理</h2>
+            <p className="mt-0.5 text-[11px] text-muted-foreground">
+              发布订单后可指定陪玩接单；不指定则全部陪玩可见。陪玩在「陪玩中心」接单，完成后自动累加人气。
+            </p>
+          </div>
+          <Button
+            size="sm"
+            onClick={() => {
+              setEditingOrder(null)
+              setOrderFormOpen(true)
+            }}
+          >
+            <Plus className="size-4" />
+            发布订单
+          </Button>
+        </div>
+
+        {(orders ?? []).length === 0 ? (
+          <div className="px-4 py-12 text-center text-sm text-muted-foreground">
+            暂无订单，点击「发布订单」创建第一条
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="hover:bg-transparent">
+                  <TableHead>订单</TableHead>
+                  <TableHead>游戏</TableHead>
+                  <TableHead className="text-right">单价</TableHead>
+                  <TableHead className="text-center">状态</TableHead>
+                  <TableHead>指派 / 接单</TableHead>
+                  <TableHead className="text-right">操作</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {(orders ?? []).map((o) => (
+                  <TableRow key={o.id}>
+                    <TableCell className="max-w-[240px]">
+                      <p className="truncate text-sm font-medium text-foreground">{o.title}</p>
+                      <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
+                        {o.duration} 小时
+                        {o.customerNote ? ` · ${o.customerNote}` : ''}
+                      </p>
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">{o.game}</TableCell>
+                    <TableCell className="text-right text-sm">¥{o.price}</TableCell>
+                    <TableCell className="text-center">
+                      <Badge
+                        variant="outline"
+                        className={
+                          o.status === 'open'
+                            ? 'border-primary/50 text-primary'
+                            : o.status === 'taken'
+                              ? 'border-amber-500/50 text-amber-500'
+                              : o.status === 'done'
+                                ? 'border-emerald-500/50 text-emerald-500'
+                                : 'border-border text-muted-foreground'
+                        }
+                      >
+                        {ORDER_STATUS_LABEL[o.status]}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-xs text-muted-foreground">
+                      {o.assignedPlayerName ? (
+                        <span className="text-primary">指派：{o.assignedPlayerName}</span>
+                      ) : (
+                        <span>公开订单</span>
+                      )}
+                      {o.takenByName && <span className="ml-2">· 接单：{o.takenByName}</span>}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center justify-end gap-1.5">
+                        {o.status === 'taken' && (
+                          <IconBtn
+                            title="标记完成"
+                            onClick={() => updateOrder.mutate({ id: o.id, status: 'done' })}
+                          >
+                            <UserCheck className="size-4" />
+                          </IconBtn>
+                        )}
+                        {o.status === 'open' && (
+                          <IconBtn
+                            title="取消订单"
+                            onClick={() => updateOrder.mutate({ id: o.id, status: 'canceled' })}
+                          >
+                            <Power className="size-4" />
+                          </IconBtn>
+                        )}
+                        <IconBtn
+                          title="编辑"
+                          onClick={() => {
+                            setEditingOrder(o)
+                            setOrderFormOpen(true)
+                          }}
+                        >
+                          <Pencil className="size-4" />
+                        </IconBtn>
+                        <IconBtn title="删除" danger onClick={() => setDeletingOrder(o)}>
+                          <Trash2 className="size-4" />
+                        </IconBtn>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+      </div>
+
       {/* 新增/编辑弹窗（key 变化时重挂载，重置表单状态） */}
       <PlayerFormDialog
         key={editing?.id ?? 'new'}
@@ -371,6 +495,39 @@ export default function AdminDashboard() {
 
       {/* 俱乐部设置 */}
       <ClubSettingsDialog open={clubOpen} onClose={() => setClubOpen(false)} />
+
+      <OrderFormDialog
+        open={orderFormOpen}
+        onOpenChange={setOrderFormOpen}
+        order={editingOrder}
+        players={list.map((p) => ({ id: p.id, nickname: p.nickname }))}
+      />
+
+      <AlertDialog open={!!deletingOrder} onOpenChange={(o) => !o && setDeletingOrder(null)}>
+        <AlertDialogContent className="border-border bg-card">
+          <AlertDialogHeader>
+            <AlertDialogTitle>确认删除订单「{deletingOrder?.title}」？</AlertDialogTitle>
+            <AlertDialogDescription>删除后无法恢复，接单记录也会一并消失。</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>取消</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground"
+              onClick={() => {
+                if (deletingOrder) {
+                  deleteOrder.mutate(deletingOrder.id, {
+                    onSuccess: () => toast.success('订单已删除'),
+                    onError: (err) => toast.error(getErrorMessage(err)),
+                  })
+                }
+                setDeletingOrder(null)
+              }}
+            >
+              删除
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* 删除确认 */}
       <AlertDialog open={!!deleting} onOpenChange={(o) => !o && setDeleting(null)}>

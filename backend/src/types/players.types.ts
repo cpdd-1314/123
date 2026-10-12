@@ -82,6 +82,8 @@ export const listPlayersQuerySchema = z.object({
   sort: z.enum(SORT_OPTIONS).default('score'),
   order: z.enum(['asc', 'desc']).default('desc'),
   status: z.enum(['active', 'all']).default('active'),
+  limit: z.coerce.number().int().min(1).max(200).optional(),
+  offset: z.coerce.number().int().min(0).default(0),
 })
 
 export type ListPlayersQuery = z.infer<typeof listPlayersQuerySchema>
