@@ -3,6 +3,6 @@
   "sub_project_type": "",
   "name": "Peiwan Rank",
   "app_slug": "peiwan-rank",
-  "version_description": "Add one-container Docker deployment",
+  "version_description": "Fix empty env vars breaking deploy",
   "preview_type": "pc"
 }
