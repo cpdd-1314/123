@@ -12,7 +12,7 @@ import { cn } from '@/lib/utils'
 const SORTS: Array<{ value: NonNullable<PlayerQuery['sort']>; label: string }> = [
   { value: 'score', label: '热度' },
   { value: 'rating', label: '评分' },
-  { value: 'orders', label: '接单数' },
+  { value: 'orders', label: '人气' },
   { value: 'price', label: '单价' },
 ]
 

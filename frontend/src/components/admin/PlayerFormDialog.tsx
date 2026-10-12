@@ -211,7 +211,7 @@ export default function PlayerFormDialog({
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="pf-orders">接单数</Label>
+              <Label htmlFor="pf-orders">人气值</Label>
               <Input
                 id="pf-orders"
                 type="number"
@@ -234,7 +234,7 @@ export default function PlayerFormDialog({
           <div className="flex flex-wrap items-center gap-6 rounded-lg border border-border/60 bg-background/40 p-3">
             <div className="flex items-center gap-2">
               <Switch id="pf-online" checked={values.isOnline} onCheckedChange={(v) => set('isOnline', v)} />
-              <Label htmlFor="pf-online" className="text-xs">在线接单</Label>
+              <Label htmlFor="pf-online" className="text-xs">在线</Label>
             </div>
             <div className="flex items-center gap-2">
               <Switch id="pf-pinned" checked={values.isPinned} onCheckedChange={(v) => set('isPinned', v)} />

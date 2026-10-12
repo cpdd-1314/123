@@ -36,7 +36,7 @@ export const GAME_OPTIONS = ['王者荣耀', '英雄联盟', '和平精英', '�
 export const SORT_LABELS: Record<string, string> = {
   score: '热度',
   rating: '评分',
-  orders: '接单数',
+  orders: '人气',
   price: '单价',
 }
 

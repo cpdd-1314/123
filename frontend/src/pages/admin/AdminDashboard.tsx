@@ -123,8 +123,8 @@ export default function AdminDashboard() {
       {/* 统计卡片 */}
       <Stagger stagger={0.08} className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatCard icon={Users} label="陪玩总数" value={players?.length ?? 0} />
-        <StatCard icon={Power} label="在线接单" value={onlineCount} />
-        <StatCard icon={ShoppingBag} label="累计接单" value={totalOrders} />
+        <StatCard icon={Power} label="在线" value={onlineCount} />
+        <StatCard icon={ShoppingBag} label="总人气" value={totalOrders} />
         <StatCard icon={Star} label="平均评分" value={avgRating} decimals={1} />
       </Stagger>
 
@@ -153,7 +153,7 @@ export default function AdminDashboard() {
                   <TableHead>游戏</TableHead>
                   <TableHead className="text-right">单价</TableHead>
                   <TableHead className="text-right">评分</TableHead>
-                  <TableHead className="text-right">接单</TableHead>
+                  <TableHead className="text-right">人气</TableHead>
                   <TableHead className="text-right">热度</TableHead>
                   <TableHead className="text-center">状态</TableHead>
                   <TableHead className="text-right">操作</TableHead>

@@ -3,6 +3,6 @@
   "sub_project_type": "",
   "name": "Peiwan Rank",
   "app_slug": "peiwan-rank",
-  "version_description": "Fix empty env vars breaking deploy",
+  "version_description": "Remove ordering features, keep leaderboard only",
   "preview_type": "pc"
 }

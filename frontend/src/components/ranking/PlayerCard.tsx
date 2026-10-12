@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Clock, Flame, Pin, ShoppingBag, Star } from 'lucide-react'
+import { Clock, Flame, Pin, Star } from 'lucide-react'
 import { HoverLift } from '@/components/MotionPrimitives'
 import RankBadge from './RankBadge'
 import { cn } from '@/lib/utils'
@@ -37,7 +37,7 @@ export default function PlayerCard({ player, rank }: { player: Player; rank: num
                 'absolute -bottom-1 -right-1 size-3.5 rounded-full border-2 border-card',
                 player.isOnline ? 'bg-success' : 'bg-muted-foreground'
               )}
-              title={player.isOnline ? '在线接单中' : '离线'}
+              title={player.isOnline ? '在线' : '离线'}
             />
           </div>
 
@@ -71,10 +71,6 @@ export default function PlayerCard({ player, rank }: { player: Player; rank: num
             <span className="flex items-center gap-1">
               <Star className="size-3.5 fill-warning text-warning" />
               <span className="font-semibold text-foreground">{player.rating.toFixed(1)}</span>
-            </span>
-            <span className="flex items-center gap-1">
-              <ShoppingBag className="size-3.5" />
-              {player.orders}
             </span>
             <span className="flex items-center gap-1 text-primary">
               <Flame className="size-3.5" />

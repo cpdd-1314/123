@@ -1,4 +1,4 @@
-import { ShoppingBag, Star, Users, Wifi } from 'lucide-react'
+import { Flame, Star, Users, Wifi } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { staggerContainer, fadeUp } from '@/components/MotionPrimitives'
 import CountUp from '@/components/reactbits/CountUp'
@@ -8,8 +8,8 @@ import type { PlayerStats } from '@/types/players'
 export default function HeroStats({ stats }: { stats?: PlayerStats }) {
   const items = [
     { icon: Users, label: '在榜陪玩', value: stats?.totalPlayers ?? 0, suffix: ' 位' },
-    { icon: Wifi, label: '在线接单', value: stats?.onlinePlayers ?? 0, suffix: ' 人' },
-    { icon: ShoppingBag, label: '累计接单', value: stats?.totalOrders ?? 0, suffix: ' 单' },
+    { icon: Wifi, label: '在线', value: stats?.onlinePlayers ?? 0, suffix: ' 人' },
+    { icon: Flame, label: '总热度', value: stats?.totalOrders ?? 0, suffix: '' },
     { icon: Star, label: '平均评分', value: stats?.avgRating ?? 0, decimals: 1, suffix: ' 分' },
   ]
 

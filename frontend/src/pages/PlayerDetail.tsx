@@ -1,5 +1,5 @@
 import { useParams, Link } from 'react-router-dom'
-import { ArrowLeft, Clock, Flame, Pin, ShoppingBag, Star, Wifi, WifiOff } from 'lucide-react'
+import { ArrowLeft, Clock, Flame, Pin, Star, Wifi, WifiOff } from 'lucide-react'
 import { FadeIn } from '@/components/MotionPrimitives'
 import { usePlayer } from '@/hooks/use-players'
 
@@ -64,7 +64,7 @@ export default function PlayerDetail() {
                 }
               >
                 {player.isOnline ? <Wifi className="size-3" /> : <WifiOff className="size-3" />}
-                {player.isOnline ? '在线接单中' : '离线'}
+                {player.isOnline ? '在线' : '离线'}
               </span>
             </div>
             <p className="mt-1.5 text-sm text-muted-foreground">
@@ -74,9 +74,8 @@ export default function PlayerDetail() {
         </div>
 
         {/* 数据面板 */}
-        <div className="grid grid-cols-2 gap-px bg-border/60 sm:grid-cols-4">
+        <div className="grid grid-cols-2 gap-px bg-border/60 sm:grid-cols-3">
           <StatCell icon={Star} label="评分" value={player.rating.toFixed(1)} highlight />
-          <StatCell icon={ShoppingBag} label="累计接单" value={`${player.orders}`} />
           <StatCell icon={Flame} label="热度积分" value={player.score.toLocaleString()} highlight />
           <StatCell icon={Clock} label="时价" value={`¥${player.pricePerHour}`} />
         </div>
@@ -108,15 +107,12 @@ export default function PlayerDetail() {
           </p>
         </div>
 
-        {/* 底部操作 */}
+        {/* 底部信息 */}
         <div className="flex items-center justify-between border-t border-border/60 px-6 py-4">
-          <span className="text-xs text-muted-foreground">资料更新于 {new Date(player.updatedAt).toLocaleString('zh-CN')}</span>
-          <button
-            className="rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground shadow-[0_0_16px_oklch(0.55_0.28_290/0.5)] transition-transform duration-200 hover:scale-105"
-            onClick={() => alert(`已向 ${player.nickname} 发送下单意向（演示）`)}
-          >
-            立即下单 · ¥{player.pricePerHour}/时
-          </button>
+          <span className="text-xs text-muted-foreground">
+            资料更新于 {new Date(player.updatedAt).toLocaleString('zh-CN')}
+          </span>
+          <span className="text-xs text-muted-foreground">数据由后台维护</span>
         </div>
       </FadeIn>
     </div>
