@@ -3,6 +3,6 @@
   "sub_project_type": "",
   "name": "Peiwan Rank",
   "app_slug": "peiwan-rank",
-  "version_description": "Fix stale build artifacts and render config",
+  "version_description": "Move rating to bottom rename club auto popularity",
   "preview_type": "pc"
 }
