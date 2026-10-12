@@ -3,6 +3,6 @@
   "sub_project_type": "",
   "name": "Peiwan Rank",
   "app_slug": "peiwan-rank",
-  "version_description": "Add avatar upload, player accounts and star ratings",
+  "version_description": "Fix stale build artifacts and render config",
   "preview_type": "pc"
 }

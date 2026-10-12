@@ -107,7 +107,15 @@ export default function PlayerDetail() {
           </p>
         </div>
 
-        {/* 星级评价 */}
+        {/* 底部信息 */}
+        <div className="flex items-center justify-between border-t border-border/60 px-6 py-4">
+          <span className="text-xs text-muted-foreground">
+            资料更新于 {new Date(player.updatedAt).toLocaleString('zh-CN')}
+          </span>
+          <span className="text-xs text-muted-foreground">数据由后台维护</span>
+        </div>
+
+        {/* 星级评价（最底部） */}
         <RatingSection
           targetName="这位陪玩"
           summary={ratingData?.summary}
@@ -117,14 +125,6 @@ export default function PlayerDetail() {
           isSubmitting={submitRating.isPending}
           error={submitRating.isError ? getErrorMessage(submitRating.error) : undefined}
         />
-
-        {/* 底部信息 */}
-        <div className="flex items-center justify-between border-t border-border/60 px-6 py-4">
-          <span className="text-xs text-muted-foreground">
-            资料更新于 {new Date(player.updatedAt).toLocaleString('zh-CN')}
-          </span>
-          <span className="text-xs text-muted-foreground">数据由后台维护</span>
-        </div>
       </FadeIn>
     </div>
   )

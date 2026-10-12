@@ -257,14 +257,20 @@ export default function PlayerFormDialog({
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="pf-orders">人气值</Label>
+              <Label htmlFor="pf-orders">人气值（接单数）</Label>
               <Input
                 id="pf-orders"
                 type="number"
                 min={0}
                 value={values.orders}
-                onChange={(e) => set('orders', Number(e.target.value))}
+                onChange={(e) => {
+                  const orders = Number(e.target.value)
+                  set('orders', orders)
+                  // 每接一单 +100 人气，自动同步热度积分
+                  set('score', orders * 100)
+                }}
               />
+              <p className="text-[11px] text-muted-foreground">每接一单自动 +100 人气</p>
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="pf-score">热度积分</Label>
@@ -274,6 +280,7 @@ export default function PlayerFormDialog({
                 value={values.score}
                 onChange={(e) => set('score', Number(e.target.value))}
               />
+              <p className="text-[11px] text-muted-foreground">随人气自动计算，可手动覆盖</p>
             </div>
           </div>
 

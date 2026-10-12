@@ -61,7 +61,7 @@ CREATE TABLE IF NOT EXISTS media (
 -- 俱乐部信息（单行）
 CREATE TABLE IF NOT EXISTS club (
   id          INTEGER PRIMARY KEY DEFAULT 1,
-  name        VARCHAR(80) NOT NULL DEFAULT '巅峰陪玩俱乐部',
+  name        VARCHAR(80) NOT NULL DEFAULT '𝓮𝓵𝓮𝓿𝓮𝓷十一愿club',
   slogan      VARCHAR(200) NOT NULL DEFAULT '',
   description TEXT        NOT NULL DEFAULT '',
   avatar      TEXT        NOT NULL DEFAULT '',
@@ -72,11 +72,15 @@ CREATE TABLE IF NOT EXISTS club (
 INSERT INTO club (id, name, slogan, description)
 VALUES (
   1,
-  '巅峰陪玩俱乐部',
+  '𝓮𝓵𝓮𝓿𝓮𝓷十一愿club',
   '实力为尊 · 服务至上',
   '我们是一家专注电竞陪玩服务的俱乐部，汇聚各游戏顶尖高手。所有陪玩实力均经过严格审核，信息由俱乐部统一维护。'
 )
 ON CONFLICT (id) DO NOTHING;
+
+-- 迁移：修正俱乐部名称（历史数据）
+UPDATE club SET name = '𝓮𝓵𝓮𝓿𝓮𝓷十一愿club', updated_at = NOW()
+WHERE id = 1 AND name = '巅峰陪玩俱乐部';
 
 -- 种子数据（仅在表为空时插入）
 INSERT INTO players (nickname, avatar, game, tags, description, price_per_hour, rating, orders, score, status, is_pinned)
