@@ -3,6 +3,6 @@
   "sub_project_type": "",
   "name": "Peiwan Rank",
   "app_slug": "peiwan-rank",
-  "version_description": "Fix origin check and ranking sort add order system",
+  "version_description": "Fix leaderboard blank when fewer than 3 players",
   "preview_type": "pc"
 }
