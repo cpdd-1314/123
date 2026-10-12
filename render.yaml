@@ -11,6 +11,7 @@ services:
         generateValue: true
       - key: ADMIN_USERNAME
         value: admin
+      # 首次部署时 Render 会提示你填写；也可改为 generateValue: true 自动生成
       - key: ADMIN_PASSWORD
         sync: false
       # 由 Render 托管的免费 PostgreSQL（创建后自动注入连接串）

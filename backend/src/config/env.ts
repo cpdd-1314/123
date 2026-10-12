@@ -3,6 +3,15 @@ import { z } from 'zod'
 
 dotenv.config()
 
+/**
+ * 把「存在但为空字符串」的环境变量视为未设置，
+ * 这样 .default() 才能真正兜底（云平台常注入空值占位）。
+ */
+const nonEmpty = (key: string): string | undefined => {
+  const raw = process.env[key]
+  return raw === undefined || raw.trim() === '' ? undefined : raw
+}
+
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   PORT: z.string().transform(Number).default('3000'),
@@ -26,12 +35,47 @@ const envSchema = z.object({
 })
 
 const parseEnv = () => {
-  try {
-    return envSchema.parse(process.env)
-  } catch (error) {
-    console.error('❌ Invalid environment variables:', error)
+  const source = {
+    NODE_ENV: nonEmpty('NODE_ENV'),
+    PORT: nonEmpty('PORT'),
+    API_PREFIX: nonEmpty('API_PREFIX'),
+    CORS_ORIGIN: nonEmpty('CORS_ORIGIN'),
+    RATE_LIMIT_WINDOW_MS: nonEmpty('RATE_LIMIT_WINDOW_MS'),
+    RATE_LIMIT_MAX_REQUESTS: nonEmpty('RATE_LIMIT_MAX_REQUESTS'),
+    DATABASE_URL: nonEmpty('DATABASE_URL'),
+    JWT_SECRET: nonEmpty('JWT_SECRET'),
+    JWT_EXPIRES_IN: nonEmpty('JWT_EXPIRES_IN'),
+    ADMIN_USERNAME: nonEmpty('ADMIN_USERNAME'),
+    ADMIN_PASSWORD: nonEmpty('ADMIN_PASSWORD'),
+  }
+
+  const result = envSchema.safeParse(source)
+
+  if (!result.success) {
+    // 逐项列出缺失/非法变量，便于在云平台日志中直接定位
+    const details = result.error.issues
+      .map((i) => `  - ${i.path.join('.')}: ${i.message}`)
+      .join('\n')
+    console.error(
+      `❌ 环境变量校验失败，请检查以下配置后重新部署:\n${details}\n` +
+        `提示: ADMIN_PASSWORD 至少 4 位，JWT_SECRET 至少 8 位。`
+    )
     process.exit(1)
   }
+
+  const parsed = result.data
+
+  // 生产环境安全提醒：检测是否仍在用默认凭据
+  if (parsed.NODE_ENV === 'production') {
+    if (parsed.ADMIN_PASSWORD === 'admin123') {
+      console.warn('⚠️  正在使用默认管理密码 admin123，请尽快在环境变量中修改 ADMIN_PASSWORD')
+    }
+    if (parsed.JWT_SECRET === 'peiwan-admin-secret-change-me') {
+      console.warn('⚠️  正在使用默认 JWT_SECRET，请在环境变量中设置为随机长字符串')
+    }
+  }
+
+  return parsed
 }
 
 export const env = parseEnv()
