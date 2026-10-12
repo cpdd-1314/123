@@ -38,7 +38,7 @@ export default function Index() {
             className="mt-4 font-[Russo_One,sans-serif] text-4xl leading-tight text-foreground sm:text-5xl"
             style={{ textShadow: '0 0 32px oklch(0.55 0.28 290 / 0.45)' }}
           >
-            巅峰<span className="bg-gradient-to-r from-primary to-info bg-clip-text text-transparent">陪玩榜</span>
+            𝓮𝓵𝓮𝓿𝓮𝓷<span className="bg-gradient-to-r from-primary to-info bg-clip-text text-transparent">十一愿club</span>
           </h1>
           <p className="mx-auto mt-3 max-w-md text-sm text-muted-foreground">
             按实力与口碑排名的电竞陪玩排行榜 —— 找到你的专属队友，愉快上分。
