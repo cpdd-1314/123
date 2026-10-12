@@ -3,6 +3,6 @@
   "sub_project_type": "",
   "name": "Peiwan Rank",
   "app_slug": "peiwan-rank",
-  "version_description": "Add weekly and monthly best leaderboard tabs",
+  "version_description": "Add game CRUD, player self-service and CSV export",
   "preview_type": "pc"
 }
