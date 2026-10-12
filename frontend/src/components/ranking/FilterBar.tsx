@@ -49,9 +49,10 @@ export default function FilterBar({
         ))}
       </div>
 
-      <div className="flex items-center gap-2">
+      {/* 搜索 / 排序：手机端搜索独占一行，排序与升降序在下 */}
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-2">
         {/* 搜索 */}
-        <div className="relative flex-1 lg:w-56">
+        <div className="relative w-full sm:w-56 lg:flex-1 lg:w-auto">
           <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <input
             value={query.keyword ?? ''}
@@ -61,6 +62,7 @@ export default function FilterBar({
           />
         </div>
 
+        <div className="flex items-center gap-2">
         {/* 排序 */}
         <Select
           value={query.sort ?? 'score'}
@@ -88,6 +90,7 @@ export default function FilterBar({
           <ArrowDownUp className={cn('size-3.5 transition-transform', query.order === 'asc' && 'rotate-180')} />
           {query.order === 'asc' ? '升序' : '降序'}
         </button>
+        </div>
       </div>
     </div>
   )

@@ -26,7 +26,7 @@ export default function Podium({ topThree }: { topThree: Player[] }) {
       initial="hidden"
       whileInView="visible"
       viewport={{ once: true, amount: 0.2 }}
-      className="flex items-end justify-center gap-3 sm:gap-6"
+      className="flex items-end justify-center gap-2 sm:gap-6"
     >
       {order.map((idx, slot) => {
         const player = topThree[idx]
@@ -39,7 +39,7 @@ export default function Podium({ topThree }: { topThree: Player[] }) {
           <motion.div
             key={player.id}
             variants={fadeUp}
-            className="flex w-28 flex-col items-center sm:w-40"
+            className="flex w-[26vw] max-w-40 flex-col items-center sm:w-40"
           >
             {/* 头像 */}
             <Link to={`/player/${player.id}`} className="group relative">

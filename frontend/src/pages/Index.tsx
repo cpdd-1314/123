@@ -122,8 +122,8 @@ export default function Index() {
         <ClubCard />
 
         {/* 榜单模式切换：实时榜 / 上周最佳 / 上月最佳 */}
-        <div className="mt-10 flex justify-center">
-          <div className="inline-flex items-center gap-1 rounded-xl border border-border bg-card/60 p-1 backdrop-blur-sm">
+        <div className="mt-10 flex max-w-full justify-center px-2">
+          <div className="inline-flex items-center gap-0.5 rounded-xl border border-border bg-card/60 p-1 backdrop-blur-sm sm:gap-1">
             {BOARD_TABS.map((t) => {
               const active = mode === t.value
               const Icon = t.icon
@@ -132,13 +132,13 @@ export default function Index() {
                   key={t.value}
                   onClick={() => setMode(t.value)}
                   className={
-                    'inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 ' +
+                    'inline-flex items-center gap-1 whitespace-nowrap rounded-lg px-2.5 py-2 text-xs font-medium transition-all duration-200 sm:gap-1.5 sm:px-4 sm:text-sm ' +
                     (active
                       ? 'bg-primary text-primary-foreground shadow-[0_0_16px_oklch(0.55_0.28_290/0.45)]'
                       : 'text-muted-foreground hover:text-foreground')
                   }
                 >
-                  <Icon className="size-4" />
+                  <Icon className="size-3.5 sm:size-4" />
                   {t.label}
                 </button>
               )
@@ -148,11 +148,11 @@ export default function Index() {
 
         {/* 历史榜统计周期日期区间（始终展示） */}
         {isHistory && periodRange && (
-          <div className="mt-6 flex justify-center">
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card/60 px-4 py-1.5 text-xs text-muted-foreground backdrop-blur-sm">
-              <CalendarDays className="size-3.5" />
+          <div className="mt-6 flex max-w-full justify-center px-4">
+            <span className="inline-flex max-w-full flex-wrap items-center justify-center gap-x-1.5 gap-y-0.5 rounded-full border border-border bg-card/60 px-4 py-1.5 text-center text-xs text-muted-foreground backdrop-blur-sm">
+              <CalendarDays className="size-3.5 shrink-0" />
               {mode === 'weekly' ? '上周最佳' : '上月最佳'}统计周期：
-              <span className="font-medium text-foreground">{periodRange}</span>
+              <span className="whitespace-nowrap font-medium text-foreground">{periodRange}</span>
             </span>
           </div>
         )}
