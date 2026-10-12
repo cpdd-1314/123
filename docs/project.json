@@ -3,6 +3,6 @@
   "sub_project_type": "",
   "name": "Peiwan Rank",
   "app_slug": "peiwan-rank",
-  "version_description": "Add game CRUD, player self-service and CSV export",
+  "version_description": "Show history period dates and admin kebab menu",
   "preview_type": "pc"
 }
