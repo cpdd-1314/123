@@ -25,6 +25,35 @@ export function usePlayers(query: PlayerQuery) {
   })
 }
 
+/** 历史榜单（上周 / 上月最佳） */
+export interface HistoryRankRow {
+  rank: number
+  playerId: number
+  nickname: string
+  avatar: string
+  game: string
+  score: number
+  orders: number
+  rating: number
+}
+export interface HistoryData {
+  period: 'weekly' | 'monthly'
+  periodStart: string
+  list: HistoryRankRow[]
+}
+
+export function useHistoryPlayers(period: 'weekly' | 'monthly' | null) {
+  return useQuery<HistoryData>({
+    queryKey: ['players-history', period],
+    queryFn: async () => {
+      const { data } = await apiClient.get('/players/history', { params: { period } })
+      return data.data as HistoryData
+    },
+    enabled: !!period,
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
 /** 公开统计 */
 export function useStats() {
   return useQuery<PlayerStats>({

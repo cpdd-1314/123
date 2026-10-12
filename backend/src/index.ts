@@ -2,6 +2,7 @@ import { createApp } from './app'
 import { env } from './config/env'
 import { logger } from './config/logger'
 import { closeDatabase, initDatabase } from './db'
+import { startSnapshotScheduler } from './modules/history'
 
 const startServer = async () => {
   try {
@@ -15,6 +16,9 @@ const startServer = async () => {
         console.log(`Server running on http://localhost:${env.PORT}${env.API_PREFIX}`)
       }
     })
+
+    // 排行榜历史快照：启动归档 + 每小时检查周期切换
+    startSnapshotScheduler()
 
     // 优雅关闭
     const shutdown = async () => {

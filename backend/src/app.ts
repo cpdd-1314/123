@@ -15,6 +15,7 @@ import { mediaRouter } from './modules/media'
 import { clubRouter } from './modules/club'
 import { playerPortalRouter } from './modules/player-portal'
 import { ordersRouter, publicOrdersRouter } from './modules/orders'
+import { historyRouter } from './modules/history'
 
 export const createApp = (): Application => {
   const app = express()
@@ -41,6 +42,8 @@ export const createApp = (): Application => {
   app.use(env.API_PREFIX, systemRouter)
 
   // Domain routes
+  // 历史榜需在 playersRouter 之前注册，避免 /history 被 /:id 详情路由拦截
+  app.use(`${env.API_PREFIX}/players`, historyRouter)
   app.use(`${env.API_PREFIX}/players`, playersRouter)
   app.use(`${env.API_PREFIX}/stats`, statsRouter)
   app.use(`${env.API_PREFIX}/admin`, adminRouter)

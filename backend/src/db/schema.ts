@@ -108,6 +108,26 @@ CREATE INDEX IF NOT EXISTS idx_orders_status    ON orders (status);
 CREATE INDEX IF NOT EXISTS idx_orders_assigned  ON orders (assigned_player_id);
 CREATE INDEX IF NOT EXISTS idx_orders_created   ON orders (created_at DESC);
 
+-- 排行榜历史快照：按周/月归档榜单，用于「上周最佳 / 上月最佳」回看
+CREATE TABLE IF NOT EXISTS ranking_snapshots (
+  id             SERIAL PRIMARY KEY,
+  period_type    VARCHAR(10) NOT NULL CHECK (period_type IN ('weekly', 'monthly')),
+  -- 周期起点：weekly 为该周周一（ISO 周），monthly 为该月 1 号
+  period_start   DATE NOT NULL,
+  player_id      INTEGER REFERENCES players(id) ON DELETE CASCADE,
+  nickname       VARCHAR(50) NOT NULL,
+  avatar         TEXT NOT NULL DEFAULT '',
+  game           VARCHAR(50) NOT NULL DEFAULT '',
+  rank           INTEGER NOT NULL CHECK (rank > 0),
+  score          INTEGER NOT NULL DEFAULT 0,
+  orders         INTEGER NOT NULL DEFAULT 0,
+  rating         NUMERIC(3,1) NOT NULL DEFAULT 0,
+  created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (period_type, period_start, player_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_snapshots_period ON ranking_snapshots (period_type, period_start, rank);
+
 -- 种子数据（仅在表为空时插入）
 INSERT INTO players (nickname, avatar, game, tags, description, price_per_hour, rating, orders, score, status, is_pinned)
 SELECT * FROM (VALUES
