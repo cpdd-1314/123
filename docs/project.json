@@ -3,6 +3,6 @@
   "sub_project_type": "",
   "name": "Peiwan Rank",
   "app_slug": "peiwan-rank",
-  "version_description": "Add realtime leaderboard sync via SSE",
+  "version_description": "Add one-container Docker deployment",
   "preview_type": "pc"
 }
