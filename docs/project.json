@@ -3,6 +3,6 @@
   "sub_project_type": "",
   "name": "Peiwan Rank",
   "app_slug": "peiwan-rank",
-  "version_description": "Build companion leaderboard with admin backend",
+  "version_description": "Add realtime leaderboard sync via SSE",
   "preview_type": "pc"
 }
