@@ -301,3 +301,17 @@ adminRouter.delete('/players/:id/account', requireAdmin, async (req: Request, re
   broadcast({ type: 'players-changed', payload: { action: 'account-changed', id } })
   res.json({ status: 'ok' })
 })
+
+/**
+ * POST /api/admin/players/:id/cleanup-test — 临时：清理测试残留（删除评价 + 重置奖励/签到）
+ */
+adminRouter.post('/players/:id/cleanup-test', requireAdmin, async (req: Request, res: Response) => {
+  const id = Number(req.params.id)
+  await pool.query('DELETE FROM ratings WHERE target_type = $1 AND target_id = $2', ['player', id])
+  await pool.query(
+    'UPDATE players SET pending_score = 0, last_checkin_date = NULL, updated_at = NOW() WHERE id = $1',
+    [id]
+  )
+  broadcast({ type: 'players-changed', payload: { action: 'updated', id } })
+  res.json({ status: 'ok' })
+})
