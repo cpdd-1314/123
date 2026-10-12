@@ -68,13 +68,15 @@ Render / Railway / 自建服务器等完整步骤见 [`docs/DEPLOY.md`](docs/DEP
 
 ## 后台账号
 
-默认 `admin / admin123`，可在 `backend/.env` 修改：
+管理后台账号通过环境变量配置，详见 [`docs/DEPLOY.md`](docs/DEPLOY.md)：
 
 ```
-ADMIN_USERNAME=admin
-ADMIN_PASSWORD=admin123
-JWT_SECRET=peiwan-admin-secret-change-me
+ADMIN_USERNAME=你的管理员账号
+ADMIN_PASSWORD=你的强密码
+JWT_SECRET=随机长字符串
 ```
+
+> 生产环境请务必使用强密码与随机 JWT_SECRET，不要使用默认凭据。
 
 ## API 一览
 

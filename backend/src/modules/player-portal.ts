@@ -174,3 +174,60 @@ playerPortalRouter.post(
     res.json({ status: 'ok', data: { message: '密码修改成功，请使用新密码重新登录' } })
   }
 )
+
+/**
+ * POST /api/player/checkin — 每日签到（每天一次），签到 +10 人气
+ */
+playerPortalRouter.post('/checkin', requirePlayer, async (req: Request, res: Response) => {
+  const playerId = req.player!.sub
+
+  const chk = await pool.query<{ signed_today: boolean }>(
+    'SELECT (last_checkin_date = CURRENT_DATE) AS signed_today FROM players WHERE id = $1',
+    [playerId]
+  )
+  if (chk.rows[0]?.signed_today) {
+    throw new AppError(400, '今天已经签到啦，明天再来~')
+  }
+
+  const { rows } = await pool.query<Record<string, unknown>>(
+    `UPDATE players
+        SET last_checkin_date = CURRENT_DATE, score = score + 10, updated_at = NOW()
+      WHERE id = $1
+      RETURNING score, pending_score`,
+    [playerId]
+  )
+
+  broadcast({ type: 'players-changed', payload: { action: 'updated', id: playerId } })
+  res.json({
+    status: 'ok',
+    data: { message: '签到成功，人气 +10', score: Number(rows[0].score), pendingScore: Number(rows[0].pending_score) },
+  })
+})
+
+/**
+ * POST /api/player/claim — 领取待领取人气（接单/好评奖励），并入总人气
+ */
+playerPortalRouter.post('/claim', requirePlayer, async (req: Request, res: Response) => {
+  const playerId = req.player!.sub
+
+  const cur = await pool.query<{ pending_score: number }>(
+    'SELECT pending_score FROM players WHERE id = $1',
+    [playerId]
+  )
+  const pending = Number(cur.rows[0]?.pending_score ?? 0)
+  if (pending <= 0) {
+    throw new AppError(400, '当前没有可领取的人气奖励')
+  }
+
+  const { rows } = await pool.query<Record<string, unknown>>(
+    `UPDATE players SET score = score + $2, pending_score = 0, updated_at = NOW()
+     WHERE id = $1 RETURNING score, pending_score`,
+    [playerId, pending]
+  )
+
+  broadcast({ type: 'players-changed', payload: { action: 'updated', id: playerId } })
+  res.json({
+    status: 'ok',
+    data: { claimed: pending, score: Number(rows[0].score), pendingScore: Number(rows[0].pending_score) },
+  })
+})

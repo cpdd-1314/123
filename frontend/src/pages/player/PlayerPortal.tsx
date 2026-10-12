@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
-import { CheckCircle2, ClipboardList, Clock, Flame, KeyRound, LogOut, Pencil, Star, User } from 'lucide-react'
+import { CheckCircle2, ClipboardList, Clock, Flame, Gift, KeyRound, LogOut, Pencil, Star, User } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -9,7 +9,7 @@ import { FadeIn } from '@/components/MotionPrimitives'
 import { StarRating } from '@/components/ranking/StarRating'
 import PlayerEditDialog from '@/components/player/PlayerEditDialog'
 import ChangePasswordDialog from '@/components/player/ChangePasswordDialog'
-import { usePlayerAuth, usePlayerLogout } from '@/hooks/use-player-portal'
+import { usePlayerAuth, usePlayerLogout, useCheckin, useClaimRewards } from '@/hooks/use-player-portal'
 import { ORDER_STATUS_LABEL, useCompleteOrder, usePlayerOrders, useTakeOrder } from '@/hooks/use-orders'
 import { getErrorMessage } from '@/lib/api-client'
 
@@ -23,6 +23,8 @@ export default function PlayerPortal() {
   const { data: orders } = usePlayerOrders(!!data)
   const takeOrder = useTakeOrder()
   const completeOrder = useCompleteOrder()
+  const checkin = useCheckin()
+  const claimRewards = useClaimRewards()
 
   const [editOpen, setEditOpen] = useState(false)
   const [pwdOpen, setPwdOpen] = useState(false)
@@ -40,6 +42,9 @@ export default function PlayerPortal() {
   }
 
   const { player, account, reviews } = data
+
+  const today = new Date().toISOString().slice(0, 10)
+  const signedToday = player.lastCheckinDate === today
 
   const handleLogout = async () => {
     await logoutMutation.mutateAsync()
@@ -110,6 +115,48 @@ export default function PlayerPortal() {
             <p className="text-xs leading-relaxed text-foreground/85">{player.description}</p>
           </div>
         )}
+      </FadeIn>
+
+      {/* 每日签到 & 奖励领取 */}
+      <FadeIn className="mt-6 overflow-hidden rounded-2xl border border-border bg-card">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/60 px-6 py-4">
+          <h2 className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
+            <Gift className="size-4 text-primary" />
+            每日签到 · 人气奖励
+          </h2>
+          {player.pendingScore > 0 ? (
+            <Button size="sm" disabled={claimRewards.isPending} onClick={() =>
+              claimRewards.mutate(undefined, {
+                onSuccess: (d) => toast.success(`领取成功，人气 +${d.claimed}`),
+                onError: (err) => toast.error(getErrorMessage(err)),
+              })
+            }>
+              <Gift className="size-4" />
+              领取 +{player.pendingScore}
+            </Button>
+          ) : (
+            <span className="text-xs text-muted-foreground">暂无待领取奖励</span>
+          )}
+        </div>
+        <div className="flex flex-col gap-3 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="text-sm text-foreground/85">
+            每日签到可获 <span className="font-semibold text-primary">+10 人气</span>；
+            每完成一单 <span className="font-semibold text-primary">+20</span>，收到 5 星好评 <span className="font-semibold text-primary">+50</span>，奖励需在「个人中心」领取。
+          </div>
+          <Button
+            variant={signedToday ? 'outline' : 'default'}
+            size="sm"
+            disabled={signedToday || checkin.isPending}
+            onClick={() =>
+              checkin.mutate(undefined, {
+                onSuccess: (d) => toast.success(`签到成功，人气 +10（当前 ${d.score}）`),
+                onError: (err) => toast.error(getErrorMessage(err)),
+              })
+            }
+          >
+            {signedToday ? '今日已签到 ✓' : '每日签到 +10'}
+          </Button>
+        </div>
       </FadeIn>
 
       {/* 我的订单：接单与完成 */}
@@ -193,7 +240,7 @@ export default function PlayerPortal() {
                           disabled={completeOrder.isPending}
                           onClick={() =>
                             completeOrder.mutate(o.id, {
-                              onSuccess: () => toast.success('订单已完成，人气 +100'),
+                              onSuccess: () => toast.success('订单已完成，人气 +20 已入账，去个人中心领取'),
                               onError: (err) => toast.error(getErrorMessage(err)),
                             })
                           }

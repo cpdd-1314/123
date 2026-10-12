@@ -76,8 +76,8 @@ location /api/events {
 |---|---|---|
 | `DATABASE_URL` | ✅ | PostgreSQL 连接串，云端通常需带 `?sslmode=require` |
 | `JWT_SECRET` | ✅ | 管理后台登录令牌密钥，请使用长随机串 |
-| `ADMIN_USERNAME` | | 管理员账号，默认 `admin` |
-| `ADMIN_PASSWORD` | ✅ | 管理员密码，默认 `admin123`，**上线前务必修改** |
+| `ADMIN_USERNAME` | | 管理员账号（不设则使用代码默认值，建议显式设置） |
+| `ADMIN_PASSWORD` | ✅ | 管理员密码，**上线前务必修改** |
 | `PORT` | | 服务端口，多数平台自动注入 |
 | `CORS_ORIGIN` | | 一体化部署保持 `*`；前后端分离时填前端域名 |
 

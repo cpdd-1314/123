@@ -24,6 +24,10 @@ export interface Player {
   score: number
   status: 'active' | 'offline'
   isPinned: boolean
+  /** 每日签到日期（与今天相同即已签到） */
+  lastCheckinDate: string | null
+  /** 待领取人气：接单/好评奖励累计，需在个人中心领取 */
+  pendingScore: number
   /** 用户星级评价聚合 */
   reviewCount: number
   reviewAverage: number

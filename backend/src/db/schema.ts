@@ -29,6 +29,10 @@ ALTER TABLE players ADD COLUMN IF NOT EXISTS account_password_hash TEXT;
 CREATE UNIQUE INDEX IF NOT EXISTS idx_players_account_username
   ON players (account_username) WHERE account_username IS NOT NULL;
 
+-- 迁移：每日签到日期（按天去重）+ 待领取人气（接单/好评奖励，由陪玩在个人中心领取）
+ALTER TABLE players ADD COLUMN IF NOT EXISTS last_checkin_date DATE;
+ALTER TABLE players ADD COLUMN IF NOT EXISTS pending_score INTEGER NOT NULL DEFAULT 0;
+
 CREATE INDEX IF NOT EXISTS idx_players_score  ON players (score DESC);
 CREATE INDEX IF NOT EXISTS idx_players_game   ON players (game);
 CREATE INDEX IF NOT EXISTS idx_players_status ON players (status);

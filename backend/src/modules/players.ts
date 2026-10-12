@@ -137,6 +137,14 @@ playersRouter.post('/:id/ratings', validate(createRatingSchema), async (req: Req
 
   const summary = await getRatingSummary('player', id)
 
+  // 满分 5 星好评：额外奖励 50 人气，进入该陪玩的「待领取」
+  if (input.stars === 5) {
+    await pool.query(
+      `UPDATE players SET pending_score = pending_score + 50, updated_at = NOW() WHERE id = $1`,
+      [id]
+    )
+  }
+
   // 广播评价变更：排行榜评分与统计需要实时刷新
   broadcast({ type: 'players-changed', payload: { action: 'rated', id } })
   broadcast({ type: 'stats-changed', payload: { target: 'player', id } })

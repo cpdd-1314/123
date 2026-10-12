@@ -45,6 +45,8 @@ export default function Index() {
           score: r.score,
           status: 'active',
           isPinned: false,
+          lastCheckinDate: null,
+          pendingScore: 0,
           reviewCount: 0,
           reviewAverage: 0,
           createdAt: '',

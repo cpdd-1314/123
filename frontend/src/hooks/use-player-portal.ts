@@ -71,3 +71,31 @@ export function useChangePassword() {
     },
   })
 }
+
+/** 陪玩每日签到（+10 人气，每天一次） */
+export function useCheckin() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async () => {
+      const { data } = await apiClient.post('/player/checkin')
+      return data.data as { message: string; score: number; pendingScore: number }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['player-me'] })
+    },
+  })
+}
+
+/** 陪玩领取待领取人气（接单/好评奖励） */
+export function useClaimRewards() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async () => {
+      const { data } = await apiClient.post('/player/claim')
+      return data.data as { claimed: number; score: number; pendingScore: number }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['player-me'] })
+    },
+  })
+}

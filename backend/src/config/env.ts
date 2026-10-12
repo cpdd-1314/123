@@ -69,11 +69,8 @@ const parseEnv = () => {
 
   const parsed = result.data
 
-  // 生产环境安全提醒：检测是否仍在用默认凭据
+  // 生产环境安全提醒：检测是否仍在用默认 JWT_SECRET
   if (parsed.NODE_ENV === 'production') {
-    if (parsed.ADMIN_PASSWORD === 'admin123') {
-      console.warn('⚠️  正在使用默认管理密码 admin123，请尽快在环境变量中修改 ADMIN_PASSWORD')
-    }
     if (parsed.JWT_SECRET === 'peiwan-admin-secret-change-me') {
       console.warn('⚠️  正在使用默认 JWT_SECRET，请在环境变量中设置为随机长字符串')
     }

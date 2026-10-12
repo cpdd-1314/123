@@ -24,6 +24,10 @@ export interface Player {
   score: number
   status: 'active' | 'offline'
   isPinned: boolean
+  /** 每日签到日期（CURRENT_DATE 同天即视为已签到） */
+  lastCheckinDate: string | null
+  /** 待领取人气：接单/好评奖励累计，由陪玩在个人中心领取 */
+  pendingScore: number
   /** 用户星级评价聚合 */
   reviewCount: number
   reviewAverage: number
@@ -144,6 +148,8 @@ export function toPlayer(row: Record<string, unknown>): Player {
     score: Number(row.score),
     status: row.status as 'active' | 'offline',
     isPinned: row.is_pinned as boolean,
+    lastCheckinDate: row.last_checkin_date ? String(row.last_checkin_date) : null,
+    pendingScore: Number(row.pending_score ?? 0),
     reviewCount: Number(row.review_count ?? 0),
     reviewAverage: Number(row.review_average ?? 0),
     createdAt: (row.created_at as Date).toISOString(),

@@ -26,9 +26,6 @@ export const adminRouter: Router = Router()
 // 密码哈希缓存（进程启动时生成一次）
 const passwordHash = bcrypt.hashSync(env.ADMIN_PASSWORD, 10)
 
-// 业务规则：每接一单增加的人气值
-const ORDERS_SCORE_UNIT = 100
-
 /**
  * POST /api/admin/login — 管理员登录（httpOnly Cookie JWT）
  */
@@ -90,8 +87,8 @@ adminRouter.get('/players', requireAdmin, async (_req: Request, res: Response) =
 adminRouter.post('/players', requireAdmin, validate(createPlayerSchema), async (req: Request, res: Response) => {
   const input = req.body as z.infer<typeof createPlayerSchema>
 
-  // 人气默认跟随订单数：每接一单 +100（管理员显式传入 score 时以传入值为准）
-  const score = input.score !== undefined && input.score > 0 ? input.score : input.orders * ORDERS_SCORE_UNIT
+  // 人气由管理员显式设定（或留 0），不再随订单数自动计算
+  const score = input.score ?? 0
 
   const { rows } = await pool.query<Record<string, unknown>>(
     `INSERT INTO players
@@ -154,13 +151,7 @@ adminRouter.put('/players/:id', requireAdmin, validate(updatePlayerSchema), asyn
     throw new AppError(400, '没有需要更新的字段')
   }
 
-  // 业务规则：人气（score）跟随订单数自动计算，每接一单 +100
-  // 管理员显式传入 score 时以传入值为准，否则在订单数变化时按 orders * ORDERS_SCORE_UNIT 重算
-  if (input.orders !== undefined && input.score === undefined) {
-    params.push(input.orders * ORDERS_SCORE_UNIT)
-    sets.push(`score = $${params.length}`)
-  }
-
+  // 人气（score）仅在管理员显式传入时更新，不再随订单数自动计算
   params.push(id)
   const { rows } = await pool.query<Record<string, unknown>>(
     `UPDATE players SET ${sets.join(', ')}, updated_at = NOW() WHERE id = $${params.length} RETURNING *`,

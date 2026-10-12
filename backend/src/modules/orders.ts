@@ -315,9 +315,9 @@ ordersRouter.post('/player/orders/:id/complete', requirePlayer, async (req: Requ
     throw new AppError(409, '只有自己接下的进行中订单才能标记完成')
   }
 
-  // 订单完成后，为该陪玩累加人气（每单 +100）
+  // 订单完成后：接单次数 +1；人气奖励 +20 进入「待领取」，由陪玩在个人中心领取
   await pool.query(
-    `UPDATE players SET orders = orders + 1, score = (orders + 1) * 100, updated_at = NOW() WHERE id = $1`,
+    `UPDATE players SET orders = orders + 1, pending_score = pending_score + 20, updated_at = NOW() WHERE id = $1`,
     [playerId]
   )
 
