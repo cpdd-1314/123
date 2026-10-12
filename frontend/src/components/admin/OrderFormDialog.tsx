@@ -18,7 +18,8 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { useCreateOrder, useUpdateOrder, type Order, type OrderPayload } from '@/hooks/use-orders'
-import { GAME_OPTIONS } from '@/types/players'
+import { useGames } from '@/hooks/use-players'
+import { GAME_OPTIONS, type Game } from '@/types/players'
 
 interface Props {
   open: boolean
@@ -54,6 +55,9 @@ export default function OrderFormDialog({ open, onOpenChange, order, players }: 
   const [values, setValues] = useState<FormValues>(EMPTY)
   const createOrder = useCreateOrder()
   const updateOrder = useUpdateOrder()
+  const { data: games } = useGames()
+  const gameList: string[] = (games?.length ? games : []).map((g: Game) => g.name)
+  const fallbackGames = gameList.length ? gameList : [...GAME_OPTIONS]
   const isEdit = Boolean(order)
   const pending = createOrder.isPending || updateOrder.isPending
 
@@ -131,7 +135,7 @@ export default function OrderFormDialog({ open, onOpenChange, order, players }: 
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {GAME_OPTIONS.map((g) => (
+                  {fallbackGames.map((g) => (
                     <SelectItem key={g} value={g}>
                       {g}
                     </SelectItem>

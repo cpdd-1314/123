@@ -19,9 +19,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { useUploadAvatar } from '@/hooks/use-players'
+import { useGames, useUploadAvatar } from '@/hooks/use-players'
 import { getErrorMessage } from '@/lib/api-client'
-import { GAME_OPTIONS, type Player, type PlayerInput } from '@/types/players'
+import { GAME_OPTIONS, type Game, type Player, type PlayerInput } from '@/types/players'
 
 interface PlayerFormValues {
   nickname: string
@@ -87,6 +87,9 @@ export default function PlayerFormDialog({
   const [uploadError, setUploadError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const uploadAvatar = useUploadAvatar()
+  const { data: games } = useGames()
+  const gameList: string[] = (games?.length ? games : []).map((g: Game) => g.name)
+  const fallbackGames = gameList.length ? gameList : [...GAME_OPTIONS]
   const isEdit = !!player
 
   const set = <K extends keyof PlayerFormValues>(key: K, value: PlayerFormValues[K]) =>
@@ -158,7 +161,7 @@ export default function PlayerFormDialog({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {GAME_OPTIONS.map((g) => (
+                  {fallbackGames.map((g) => (
                     <SelectItem key={g} value={g}>{g}</SelectItem>
                   ))}
                 </SelectContent>

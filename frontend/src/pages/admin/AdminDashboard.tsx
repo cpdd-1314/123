@@ -24,7 +24,10 @@ import {
 import { toast } from 'sonner'
 import {
   Building2,
+  Download,
+  Filter,
   Flame,
+  Gamepad2,
   KeyRound,
   LogOut,
   MessageSquare,
@@ -32,6 +35,7 @@ import {
   Pin,
   PinOff,
   Plus,
+  Search,
   Star,
   Trash2,
   UserCheck,
@@ -43,6 +47,7 @@ import CountUp from '@/components/reactbits/CountUp'
 import PlayerFormDialog from '@/components/admin/PlayerFormDialog'
 import AccountDialog from '@/components/admin/AccountDialog'
 import ClubSettingsDialog from '@/components/admin/ClubSettingsDialog'
+import GamesDialog from '@/components/admin/GamesDialog'
 import OrderFormDialog from '@/components/admin/OrderFormDialog'
 import { useAdminAuth, useLogout } from '@/hooks/use-admin-auth'
 import { useAccountMutations, useAdminPlayers, usePlayerMutations } from '@/hooks/use-players'
@@ -72,6 +77,9 @@ export default function AdminDashboard() {
   const [accountPlayer, setAccountPlayer] = useState<AdminPlayer | null>(null)
   const [generated, setGenerated] = useState<GeneratedAccount | null>(null)
   const [clubOpen, setClubOpen] = useState(false)
+  const [gamesOpen, setGamesOpen] = useState(false)
+  const [search, setSearch] = useState('')
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'offline'>('all')
 
   // 未登录 → 重定向登录页
   if (!authLoading && (authError || !me)) {
@@ -137,6 +145,19 @@ export default function AdminDashboard() {
   }
 
   const list = players ?? []
+
+  // 本地搜索 / 状态筛选
+  const filteredList = list.filter((p) => {
+    const matchStatus = statusFilter === 'all' || p.status === statusFilter
+    const kw = search.trim().toLowerCase()
+    const matchKw =
+      !kw ||
+      p.nickname.toLowerCase().includes(kw) ||
+      p.game.toLowerCase().includes(kw) ||
+      (p.tags ?? []).some((t) => t.toLowerCase().includes(kw))
+    return matchStatus && matchKw
+  })
+
   const totalOrders = list.reduce((sum, p) => sum + p.orders, 0)
   const totalReviews = list.reduce((sum, p) => sum + p.reviewCount, 0)
   const activeCount = list.filter((p) => p.status === 'active').length
@@ -161,6 +182,10 @@ export default function AdminDashboard() {
           <Button variant="outline" onClick={() => setClubOpen(true)}>
             <Building2 className="size-4" />
             俱乐部设置
+          </Button>
+          <Button variant="outline" onClick={() => setGamesOpen(true)}>
+            <Gamepad2 className="size-4" />
+            游戏管理
           </Button>
           <Button
             onClick={() => {
@@ -193,11 +218,47 @@ export default function AdminDashboard() {
 
       {/* 管理表格 */}
       <div className="mt-8 overflow-hidden rounded-xl border border-border bg-card">
-        <div className="border-b border-border/60 px-4 py-3">
-          <h2 className="text-sm font-semibold text-foreground">陪玩管理</h2>
-          <p className="mt-0.5 text-[11px] text-muted-foreground">
-            热度积分决定排名；置顶的陪玩将优先展示在榜单最前面。可为每位陪玩生成专属账号。
-          </p>
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/60 px-4 py-3">
+          <div>
+            <h2 className="text-sm font-semibold text-foreground">陪玩管理</h2>
+            <p className="mt-0.5 text-[11px] text-muted-foreground">
+              热度积分决定排名；置顶的陪玩将优先展示在榜单最前面。可为每位陪玩生成专属账号。
+            </p>
+          </div>
+          <Button variant="outline" size="sm" onClick={() => exportPlayersCsv(filteredList)}>
+            <Download className="size-4" />
+            导出名单
+          </Button>
+        </div>
+
+        {/* 搜索 / 状态筛选 */}
+        <div className="flex flex-wrap items-center gap-2 px-4 py-3">
+          <div className="relative flex-1 sm:w-64">
+            <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="搜索昵称 / 游戏 / 标签"
+              className="h-9 w-full rounded-lg border border-input bg-background/60 pl-8 pr-3 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-ring/40"
+            />
+          </div>
+          <div className="flex items-center gap-1.5 rounded-lg border border-border bg-background/60 p-1">
+            <Filter className="ml-1.5 size-3.5 text-muted-foreground" />
+            {(['all', 'active', 'offline'] as const).map((s) => (
+              <button
+                key={s}
+                onClick={() => setStatusFilter(s)}
+                className={
+                  'rounded-md px-2.5 py-1 text-xs font-medium transition-colors ' +
+                  (statusFilter === s
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-muted-foreground hover:text-foreground')
+                }
+              >
+                {s === 'all' ? '全部' : s === 'active' ? '已上架' : '已下架'}
+              </button>
+            ))}
+          </div>
         </div>
 
         {isLoading ? (
@@ -224,7 +285,7 @@ export default function AdminDashboard() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {list.map((p, i) => (
+                {filteredList.map((p, i) => (
                   <TableRow key={p.id} className={p.status === 'offline' ? 'opacity-50' : ''}>
                     <TableCell>
                       <span className="flex size-7 items-center justify-center rounded-md bg-secondary/70 text-xs font-semibold text-muted-foreground">
@@ -339,10 +400,12 @@ export default function AdminDashboard() {
                     </TableCell>
                   </TableRow>
                 ))}
-                {list.length === 0 && (
+                {filteredList.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={10} className="py-12 text-center text-sm text-muted-foreground">
-                      暂无陪玩数据，点击右上角「新增陪玩」开始
+                      {list.length === 0
+                        ? '暂无陪玩数据，点击右上角「新增陪玩」开始'
+                        : '没有符合筛选条件的陪玩'}
                     </TableCell>
                   </TableRow>
                 )}
@@ -496,6 +559,9 @@ export default function AdminDashboard() {
       {/* 俱乐部设置 */}
       <ClubSettingsDialog open={clubOpen} onClose={() => setClubOpen(false)} />
 
+      {/* 游戏目录管理 */}
+      <GamesDialog open={gamesOpen} onClose={() => setGamesOpen(false)} />
+
       <OrderFormDialog
         open={orderFormOpen}
         onOpenChange={setOrderFormOpen}
@@ -549,6 +615,38 @@ export default function AdminDashboard() {
       </AlertDialog>
     </div>
   )
+}
+
+function exportPlayersCsv(rows: AdminPlayer[]) {
+  const header = ['排名', '昵称', '游戏', '标签', '单价(元/时)', '星级', '人气', '热度', '状态', '账号']
+  const escape = (v: string | number) => {
+    const s = String(v ?? '')
+    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s
+  }
+  const lines = rows.map((p, i) =>
+    [
+      i + 1,
+      p.nickname,
+      p.game,
+      (p.tags ?? []).join('/'),
+      p.pricePerHour,
+      p.reviewCount > 0 ? p.reviewAverage.toFixed(1) : p.rating.toFixed(1),
+      p.orders,
+      p.score,
+      p.status === 'active' ? '已上架' : '已下架',
+      p.accountUsername ?? '',
+    ]
+      .map(escape)
+      .join(',')
+  )
+  const csv = '﻿' + [header.join(','), ...lines].join('\n')
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `陪玩名单_${new Date().toISOString().slice(0, 10)}.csv`
+  a.click()
+  URL.revokeObjectURL(url)
 }
 
 function StatCard({

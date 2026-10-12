@@ -67,6 +67,13 @@ export interface PlayerQuery {
 
 export const GAME_OPTIONS = ['王者荣耀', '英雄联盟', '和平精英', '无畏契约', '永劫无间'] as const
 
+/** 游戏目录（后台可增删，前端下拉同步） */
+export interface Game {
+  id: number
+  name: string
+  sortOrder: number
+}
+
 export const SORT_LABELS: Record<string, string> = {
   score: '热度',
   rating: '评分',

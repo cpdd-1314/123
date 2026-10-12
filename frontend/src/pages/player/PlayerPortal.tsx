@@ -1,11 +1,14 @@
+import { useState } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
-import { CheckCircle2, ClipboardList, Clock, Flame, LogOut, Star, User } from 'lucide-react'
+import { CheckCircle2, ClipboardList, Clock, Flame, KeyRound, LogOut, Pencil, Star, User } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { FadeIn } from '@/components/MotionPrimitives'
 import { StarRating } from '@/components/ranking/StarRating'
+import PlayerEditDialog from '@/components/player/PlayerEditDialog'
+import ChangePasswordDialog from '@/components/player/ChangePasswordDialog'
 import { usePlayerAuth, usePlayerLogout } from '@/hooks/use-player-portal'
 import { ORDER_STATUS_LABEL, useCompleteOrder, usePlayerOrders, useTakeOrder } from '@/hooks/use-orders'
 import { getErrorMessage } from '@/lib/api-client'
@@ -20,6 +23,9 @@ export default function PlayerPortal() {
   const { data: orders } = usePlayerOrders(!!data)
   const takeOrder = useTakeOrder()
   const completeOrder = useCompleteOrder()
+
+  const [editOpen, setEditOpen] = useState(false)
+  const [pwdOpen, setPwdOpen] = useState(false)
 
   if (!isLoading && (isError || !data)) {
     return <Navigate to="/player/login" replace />
@@ -48,10 +54,20 @@ export default function PlayerPortal() {
           <h1 className="text-2xl font-bold text-foreground">陪玩个人中心</h1>
           <p className="mt-1 text-sm text-muted-foreground">当前账号：{account.username}</p>
         </div>
-        <Button variant="outline" onClick={handleLogout} disabled={logoutMutation.isPending}>
-          <LogOut className="size-4" />
-          退出登录
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
+            <Pencil className="size-4" />
+            编辑资料
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => setPwdOpen(true)}>
+            <KeyRound className="size-4" />
+            修改密码
+          </Button>
+          <Button variant="outline" size="sm" onClick={handleLogout} disabled={logoutMutation.isPending}>
+            <LogOut className="size-4" />
+            退出登录
+          </Button>
+        </div>
       </FadeIn>
 
       {/* 资料卡 */}
@@ -234,6 +250,14 @@ export default function PlayerPortal() {
           </ul>
         )}
       </FadeIn>
+
+      <PlayerEditDialog
+        open={editOpen}
+        player={player}
+        onClose={() => setEditOpen(false)}
+        onSaved={() => toast.success('资料已更新')}
+      />
+      <ChangePasswordDialog open={pwdOpen} onClose={() => setPwdOpen(false)} />
     </div>
   )
 }

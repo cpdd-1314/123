@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import apiClient from '@/lib/api-client'
 import type {
   AdminPlayer,
+  Game,
   GeneratedAccount,
   Player,
   PlayerQuery,
@@ -64,6 +65,41 @@ export function useStats() {
     },
     staleTime: 30 * 1000,
   })
+}
+
+/** 游戏目录（公开） */
+export function useGames() {
+  return useQuery<Game[]>({
+    queryKey: ['games'],
+    queryFn: async () => {
+      const { data } = await apiClient.get('/games')
+      return data.data as Game[]
+    },
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
+/** 管理员：游戏增删 */
+export function useGameMutations() {
+  const queryClient = useQueryClient()
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: ['games'] })
+
+  const createGame = useMutation({
+    mutationFn: async (name: string) => {
+      const { data } = await apiClient.post('/games', { name })
+      return data.data as Game
+    },
+    onSuccess: invalidate,
+  })
+
+  const deleteGame = useMutation({
+    mutationFn: async (id: number) => {
+      await apiClient.delete(`/games/${id}`)
+    },
+    onSuccess: invalidate,
+  })
+
+  return { createGame, deleteGame }
 }
 
 /** 陪玩详情 */

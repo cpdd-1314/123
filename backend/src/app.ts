@@ -16,6 +16,7 @@ import { clubRouter } from './modules/club'
 import { playerPortalRouter } from './modules/player-portal'
 import { ordersRouter, publicOrdersRouter } from './modules/orders'
 import { historyRouter } from './modules/history'
+import { gamesRouter } from './modules/games'
 
 export const createApp = (): Application => {
   const app = express()
@@ -50,6 +51,9 @@ export const createApp = (): Application => {
 
   // 俱乐部信息与评价
   app.use(`${env.API_PREFIX}/club`, clubRouter)
+
+  // 游戏目录：公开读取 + 管理员增删
+  app.use(`${env.API_PREFIX}/games`, gamesRouter)
 
   // 陪玩端账号登录与个人数据
   app.use(`${env.API_PREFIX}/player`, playerPortalRouter)

@@ -57,10 +57,17 @@ export default function Index() {
   const boardLoading = isHistory ? historyLoading : isLoading
 
   const isFiltered = !isHistory && (!!query.game || !!query.keyword)
-  // 领奖台最多 3 人；榜单不足 3 人时全部进领奖台，剩余进列表
-  const podiumCount = Math.min(3, boardPlayers.length)
-  const topThree = useMemo(() => boardPlayers.slice(0, podiumCount), [boardPlayers, podiumCount])
-  const rest = useMemo(() => boardPlayers.slice(podiumCount), [boardPlayers, podiumCount])
+  // 领奖台仅在前端未筛选且人数 > 3 时展示；列表始终展示完整名册，避免人数少时空白
+  const showPodium = !isFiltered && boardPlayers.length > 3
+  const podiumPlayers = useMemo<Player[]>(
+    () => (showPodium ? boardPlayers.slice(0, 3) : []),
+    [showPodium, boardPlayers]
+  )
+  const listPlayers = useMemo<Player[]>(
+    () => (isFiltered ? boardPlayers : boardPlayers.slice(showPodium ? 3 : 0)),
+    [isFiltered, showPodium, boardPlayers]
+  )
+  const startRank = isFiltered ? 1 : showPodium ? 4 : 1
 
   return (
     <div className="relative min-h-screen">
@@ -121,19 +128,17 @@ export default function Index() {
           </div>
         </div>
 
-        {/* TOP3 领奖台（无筛选时展示；榜单不足 3 人时展示现有全部） */}
-        {!isFiltered && topThree.length > 0 && (
+        {/* TOP3 领奖台（未筛选且人数 > 3 时展示） */}
+        {showPodium && podiumPlayers.length > 0 && (
           <section className="mt-12">
             <h2 className="mb-6 text-center text-sm font-semibold tracking-[0.4em] text-muted-foreground">
               {isHistory
                 ? mode === 'weekly'
                   ? '上周最佳 · 荣耀殿堂'
                   : '上月最佳 · 荣耀殿堂'
-                : topThree.length >= 3
-                  ? 'TOP 3 荣耀殿堂'
-                  : '荣耀榜单'}
+                : 'TOP 3 荣耀殿堂'}
             </h2>
-            <Podium topThree={topThree} />
+            <Podium topThree={podiumPlayers} />
             {isHistory && history?.periodStart && (
               <p className="mt-4 text-center text-xs text-muted-foreground">
                 统计周期：{history.periodStart} 起的{mode === 'weekly' ? '一周' : '一个月'} · 快照于周期结束时生成
@@ -149,7 +154,7 @@ export default function Index() {
           </div>
         )}
 
-        {/* 榜单列表（全员都在领奖台时不再重复展示） */}
+        {/* 榜单列表：始终展示完整名册 */}
         <section className="mt-6">
           {boardLoading ? (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -157,15 +162,12 @@ export default function Index() {
                 <div key={i} className="h-52 animate-pulse rounded-xl border border-border bg-card/60" />
               ))}
             </div>
-          ) : boardPlayers.length > 0 && (isFiltered ? players!.length > 0 : rest.length > 0) ? (
+          ) : boardPlayers.length > 0 ? (
             <Stagger stagger={0.05} className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {(isFiltered ? players! : rest).map((player, i) => (
-                <PlayerCard key={player.id} player={player} rank={isFiltered ? i + 1 : i + 4} />
+              {listPlayers.map((player, i) => (
+                <PlayerCard key={player.id} player={player} rank={startRank + i} />
               ))}
             </Stagger>
-          ) : boardPlayers.length > 0 ? (
-            // 榜单有数据但全部在领奖台展示，无需列表
-            null
           ) : (
             <div className="rounded-xl border border-dashed border-border py-16 text-center">
               <p className="text-sm text-muted-foreground">

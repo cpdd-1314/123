@@ -6,7 +6,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { GAME_OPTIONS, SORT_LABELS, type PlayerQuery } from '@/types/players'
+import { GAME_OPTIONS, SORT_LABELS, type Game, type PlayerQuery } from '@/types/players'
+import { useGames } from '@/hooks/use-players'
 import { cn } from '@/lib/utils'
 
 const SORTS: Array<{ value: NonNullable<PlayerQuery['sort']>; label: string }> = [
@@ -24,6 +25,10 @@ export default function FilterBar({
   query: PlayerQuery
   onChange: (q: PlayerQuery) => void
 }) {
+  const { data: games } = useGames()
+  const gameList: string[] = (games?.map((g: Game) => g.name) ?? []).length
+    ? (games as Game[]).map((g) => g.name)
+    : [...GAME_OPTIONS]
   const set = (patch: Partial<PlayerQuery>) => onChange({ ...query, ...patch })
 
   return (
@@ -33,7 +38,7 @@ export default function FilterBar({
         <FilterChip active={!query.game} onClick={() => set({ game: undefined })}>
           全部
         </FilterChip>
-        {GAME_OPTIONS.map((game) => (
+        {gameList.map((game) => (
           <FilterChip
             key={game}
             active={query.game === game}

@@ -40,3 +40,34 @@ export function usePlayerLogout() {
     },
   })
 }
+
+/** 陪玩自助修改个人资料 */
+export function useUpdateSelf() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (input: {
+      nickname?: string
+      avatar?: string
+      game?: string
+      tags?: string[]
+      description?: string
+      pricePerHour?: number
+    }) => {
+      const { data } = await apiClient.patch('/player/me', input)
+      return data.data as PlayerPortalData['player']
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['player-me'] })
+    },
+  })
+}
+
+/** 陪玩修改登录密码 */
+export function useChangePassword() {
+  return useMutation({
+    mutationFn: async (input: { oldPassword: string; newPassword: string }) => {
+      const { data } = await apiClient.post('/player/change-password', input)
+      return data.data as { message: string }
+    },
+  })
+}
