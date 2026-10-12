@@ -1,0 +1,17 @@
+**/node_modules
+**/dist
+**/build
+**/.git
+**/.gitignore
+**/*.log
+**/.env
+**/.env.*
+!**/.env.production.example
+**/.genie
+**/.cloudstudio
+**/.codebuddy
+**/.vscode
+**/.idea
+*.zip
+Dockerfile
+.dockerignore

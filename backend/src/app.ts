@@ -1,6 +1,8 @@
 import express, { Application } from 'express'
 import cors from 'cors'
 import compression from 'compression'
+import path from 'path'
+import fs from 'fs'
 import 'express-async-errors'
 import { env } from './config/env'
 import { errorHandler } from './middleware/errorHandler'
@@ -41,6 +43,16 @@ export const createApp = (): Application => {
 
   // Realtime (SSE)
   app.use(`${env.API_PREFIX}/events`, eventsRouter)
+
+  // 生产环境：托管前端构建产物，实现同源一体化部署（API + SSE + 静态页）
+  const clientDist = path.resolve(process.cwd(), '../frontend/dist')
+  if (fs.existsSync(path.join(clientDist, 'index.html'))) {
+    app.use(express.static(clientDist, { index: false, maxAge: '1h' }))
+    // SPA fallback：非 API 路由一律回落到 index.html（支持前端路由刷新）
+    app.get(/^(?!\/api).*/, (_req, res) => {
+      res.sendFile(path.join(clientDist, 'index.html'))
+    })
+  }
 
   // Error handling
   app.use(errorHandler)

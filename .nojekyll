@@ -1,0 +1,3 @@
+# GitHub Pages 静态托管已停用：本项目为前后端一体化应用，
+# 依赖 Express 服务与 SSE 长连接，需部署到支持 Docker/Node 的平台。
+# 部署方式见 docs/DEPLOY.md

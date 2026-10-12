@@ -44,6 +44,18 @@ cd backend && pnpm dev
 数据库连接见 `backend/.env` 的 `DATABASE_URL`（默认本地 docker postgres / genie 库）。
 服务启动时自动执行建表与种子数据（12 位陪玩），重复执行无副作用。
 
+## 部署
+
+前后端**一体化部署**：Express 在生产环境同时托管前端构建产物、API 与 SSE，单服务单端口即可访问完整功能（含实时同步）。
+
+```bash
+# Docker 一行运行（需自备 PostgreSQL）
+docker build -t peiwan-rank . && docker run -p 3000:3000 -e DATABASE_URL="..." peiwan-rank
+```
+
+Render / Railway / 自建服务器等完整步骤见 [`docs/DEPLOY.md`](docs/DEPLOY.md)。
+> 注意：GitHub Pages 仅支持静态托管，无法运行后端与 SSE，本应用不适用。
+
 ## 后台账号
 
 默认 `admin / admin123`，可在 `backend/.env` 修改：

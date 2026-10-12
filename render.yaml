@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: peiwan-rank
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        generateValue: true
+      - key: ADMIN_USERNAME
+        value: admin
+      - key: ADMIN_PASSWORD
+        sync: false
+      # 由 Render 托管的免费 PostgreSQL（创建后自动注入连接串）
+      - key: DATABASE_URL
+        fromDatabase:
+          name: peiwan-db
+          property: connectionString
+
+databases:
+  - name: peiwan-db
+    plan: free
+    databaseName: peiwan
+    user: peiwan
