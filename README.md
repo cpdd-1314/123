@@ -17,6 +17,11 @@
 - 陪玩管理表格：新增、编辑、删除、上架/下架、置顶推荐
 - 热度积分可直接调整，实时影响榜单排名
 
+**实时同步（SSE）**
+- 后台任一变更（增 / 改 / 删 / 上下架 / 置顶）通过 `GET /api/events` 推送 `players-changed` 事件
+- 前台 `EventSource` 订阅后自动失效 TanStack Query 缓存，榜单 / 统计 / 详情即时刷新，无需手动刷新页面
+- 导航栏 LIVE 指示灯显示连接状态；25s 心跳保活，断线指数退避自动重连
+
 ## 技术栈
 
 | 层 | 技术 |
@@ -63,6 +68,7 @@ JWT_SECRET=peiwan-admin-secret-change-me
 | PUT/DELETE | `/api/admin/players/:id` | 编辑 / 删除 |
 | PATCH | `/api/admin/players/:id/status` | 上架 / 下架 |
 | PATCH | `/api/admin/players/:id/pin` | 置顶 / 取消 |
+| GET | `/api/events` | SSE 实时推送（`players-changed` 事件 + 心跳） |
 
 详细产品设计见 [`docs/product/features.md`](docs/product/features.md)。
 
@@ -71,7 +77,8 @@ JWT_SECRET=peiwan-admin-secret-change-me
 ```
 backend/src/
   modules/players.ts   # 前台榜单 + 统计 + 详情
-  modules/admin.ts     # 登录 + 管理端 CRUD
+  modules/admin.ts     # 登录 + 管理端 CRUD（变更后广播事件）
+  modules/events.ts    # SSE 实时推送
   modules/system.ts    # 健康检查
   db/                  # 连接池 + schema（含种子数据）
   middleware/auth.ts   # Cookie JWT 鉴权
@@ -81,4 +88,5 @@ frontend/src/
   pages/admin/               # 登录 + 数据看板
   components/ranking/        # 领奖台 / 卡片 / 筛选栏 / 统计
   components/reactbits/      # CountUp 数字滚动
+  hooks/use-realtime.ts      # EventSource 订阅 + 缓存失效
 ```
