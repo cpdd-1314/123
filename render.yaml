@@ -9,7 +9,7 @@ services:
         value: production
       - key: JWT_SECRET
         generateValue: true
-      - key: ADMIN_USERNAME
+      - key: admin
         value: admin
       # 首次部署时 Render 会提示你填写；也可改为 generateValue: true 自动生成
       - key: ADMIN_PASSWORD
